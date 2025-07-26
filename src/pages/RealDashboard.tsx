@@ -218,82 +218,149 @@ const Dashboard = () => {
   const handleCreateTenant = async (data: any) => {
     console.log("Dados recebidos para criar inquilino:", data);
     
-    // Primeiro criar o perfil do inquilino
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: "tempPassword123!", // Senha temporária
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          name: data.name,
-          role: 'tenant',
+    try {
+      // Primeiro criar o usuário
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: "tempPassword123!", // Senha temporária
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name: data.name,
+            role: 'tenant',
+          }
         }
-      }
-    });
-
-    console.log("Resultado auth.signUp:", { authData, authError });
-
-    if (authError) {
-      console.error("Erro no signUp:", authError);
-      toast({
-        title: "Erro ao criar inquilino",
-        description: authError.message,
-        variant: "destructive",
       });
-      return;
-    }
 
-    // Atualizar o perfil com informações adicionais e buscar o profile_id
-    if (authData.user) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          phone: data.phone,
-          cpf: data.document,
-        })
-        .eq("user_id", authData.user.id);
+      console.log("Resultado auth.signUp:", { authData, authError });
 
-      // Buscar o profile_id para usar como tenant_id
-      const { data: profileData, error: fetchError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", authData.user.id)
-        .single();
-
-      if (fetchError || !profileData) {
+      if (authError) {
+        console.error("Erro no signUp:", authError);
         toast({
-          title: "Erro ao buscar perfil",
-          description: "Não foi possível encontrar o perfil criado.",
+          title: "Erro ao criar inquilino",
+          description: authError.message,
           variant: "destructive",
         });
         return;
       }
 
-      // Atribuir ao imóvel usando o profile_id
-      const { error: propertyError } = await supabase
-        .from("properties")
-        .update({
-          is_occupied: true,
-          tenant_id: profileData.id,
-          contract_start_date: data.startDate,
-          contract_end_date: data.endDate,
-        })
-        .eq("id", data.propertyId);
-
-      if (profileError || propertyError) {
+      if (!authData.user) {
         toast({
-          title: "Erro ao finalizar cadastro",
-          description: "Dados criados mas houve erro na configuração.",
+          title: "Erro",
+          description: "Não foi possível criar o usuário.",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Inquilino cadastrado",
-          description: "O inquilino foi cadastrado e atribuído ao imóvel.",
-        });
-        fetchAdminData();
-        setShowTenantForm(false);
+        return;
       }
+
+      // Criar o perfil manualmente (caso o trigger não funcione)
+      const { data: profileData, error: profileInsertError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: authData.user.id,
+          name: data.name,
+          email: data.email,
+          role: 'tenant',
+          phone: data.phone,
+          cpf: data.document,
+        })
+        .select("id")
+        .single();
+
+      if (profileInsertError) {
+        // Se der erro de duplicação, tentar atualizar o perfil existente
+        console.log("Perfil já existe, tentando atualizar...");
+        
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            phone: data.phone,
+            cpf: data.document,
+          })
+          .eq("user_id", authData.user.id);
+
+        if (updateError) {
+          console.error("Erro ao atualizar perfil:", updateError);
+          toast({
+            title: "Erro ao atualizar perfil",
+            description: updateError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Buscar o perfil atualizado
+        const { data: existingProfile, error: fetchError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", authData.user.id)
+          .single();
+
+        if (fetchError || !existingProfile) {
+          toast({
+            title: "Erro ao buscar perfil",
+            description: "Não foi possível encontrar o perfil.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Atualizar propriedade com o perfil existente
+        const { error: propertyError } = await supabase
+          .from("properties")
+          .update({
+            is_occupied: true,
+            tenant_id: existingProfile.id,
+            contract_start_date: data.startDate,
+            contract_end_date: data.endDate,
+          })
+          .eq("id", data.propertyId);
+
+        if (propertyError) {
+          toast({
+            title: "Erro ao designar imóvel",
+            description: propertyError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      } else {
+        // Perfil criado com sucesso, atribuir ao imóvel
+        const { error: propertyError } = await supabase
+          .from("properties")
+          .update({
+            is_occupied: true,
+            tenant_id: profileData.id,
+            contract_start_date: data.startDate,
+            contract_end_date: data.endDate,
+          })
+          .eq("id", data.propertyId);
+
+        if (propertyError) {
+          toast({
+            title: "Erro ao designar imóvel",
+            description: propertyError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      toast({
+        title: "Inquilino cadastrado",
+        description: "O inquilino foi cadastrado e atribuído ao imóvel com sucesso.",
+      });
+      
+      fetchAdminData();
+      setShowTenantForm(false);
+
+    } catch (error) {
+      console.error("Erro geral no cadastro:", error);
+      toast({
+        title: "Erro no cadastro",
+        description: "Ocorreu um erro inesperado durante o cadastro.",
+        variant: "destructive",
+      });
     }
   };
 
