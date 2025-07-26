@@ -320,12 +320,12 @@ export const RepairRequest = ({
                               <SelectItem value="completed">Concluído</SelectItem>
                             </SelectContent>
                           </Select>
-                          {request.status === 'completed' && onDeleteRequest && (
+                          {onDeleteRequest && (
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => handleDeleteRequest(request.id)}
-                              title="Excluir reparo concluído"
+                              title="Excluir solicitação de reparo"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

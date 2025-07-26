@@ -449,7 +449,8 @@ export const PropertyManagement = ({
                 description: selectedProperty.description || "",
                 bedrooms: selectedProperty.bedrooms || "",
                 bathrooms: selectedProperty.bathrooms || "",
-                area: selectedProperty.area || ""
+                area: selectedProperty.area || "",
+                securityDeposit: selectedProperty.security_deposit || ""
               }}
               isEditing={true}
             />
