@@ -28,6 +28,7 @@ interface Property {
   bedrooms?: string;
   bathrooms?: string;
   area?: string;
+  security_deposit?: string;
   isOccupied: boolean;
   tenantId?: string;
   contractFile?: string;
@@ -217,6 +218,7 @@ export const PropertyManagement = ({
                 <TableHead>Nome</TableHead>
                 <TableHead>Endereço</TableHead>
                 <TableHead>Aluguel</TableHead>
+                <TableHead>Caução</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Inquilino</TableHead>
                 <TableHead>Status Pagamento</TableHead>
@@ -233,6 +235,9 @@ export const PropertyManagement = ({
                     <TableCell className="font-medium">{property.name}</TableCell>
                     <TableCell>{property.address}</TableCell>
                     <TableCell>R$ {property.rent}</TableCell>
+                    <TableCell>
+                      {property.security_deposit ? `R$ ${property.security_deposit}` : '-'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <div 
