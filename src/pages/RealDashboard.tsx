@@ -15,6 +15,8 @@ import { TenantForm } from "@/components/TenantForm";
 import { TenantAssignment } from "@/components/TenantAssignment";
 import { PaymentProof } from "@/components/PaymentProof";
 import { RepairRequest } from "@/components/RepairRequest";
+import LateFeeSettings from "@/components/LateFeeSettings";
+import LateFeeView from "@/components/LateFeeView";
 
 interface User {
   id: string;
@@ -187,6 +189,7 @@ const Dashboard = () => {
         name: data.name,
         address: data.address,
         rent_amount: parseFloat(data.rent),
+        security_deposit: parseFloat(data.securityDeposit || '0'),
         description: data.description,
         bedrooms: parseInt(data.bedrooms),
         bathrooms: parseInt(data.bathrooms),
@@ -796,17 +799,21 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="settings">
-              <MercadoPagoSettings adminId={user.id} />
+              <div className="space-y-6">
+                <MercadoPagoSettings adminId={user.id} />
+                <LateFeeSettings adminId={user.id} />
+              </div>
             </TabsContent>
           </Tabs>
         )}
 
         {user?.role === "tenant" && (
           <Tabs defaultValue="property" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="property">Meu Imóvel</TabsTrigger>
               <TabsTrigger value="repairs">Reparos</TabsTrigger>
               <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+              <TabsTrigger value="fees">Taxas</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
             </TabsList>
 
@@ -909,6 +916,23 @@ const Dashboard = () => {
                   onUpdateProofStatus={updatePaymentProofStatus}
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent value="fees">
+              {userProperty ? (
+                <LateFeeView 
+                  tenantId={user.id} 
+                  propertyId={userProperty.id} 
+                />
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      Você precisa estar associado a uma propriedade para visualizar as taxas.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="chat">

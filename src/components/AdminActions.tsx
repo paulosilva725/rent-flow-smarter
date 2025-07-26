@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { ReportsSystem } from "./ReportsSystem";
+import LateFeeSettings from "./LateFeeSettings";
 import { 
   Building2, 
   Users, 

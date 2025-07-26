@@ -19,6 +19,8 @@ export type Database = {
           admin_id: string | null
           created_at: string
           id: string
+          late_fee_grace_days: number | null
+          late_fee_percentage: number | null
           mercadopago_access_token: string | null
           mercadopago_public_key: string | null
           updated_at: string
@@ -28,6 +30,8 @@ export type Database = {
           admin_id?: string | null
           created_at?: string
           id?: string
+          late_fee_grace_days?: number | null
+          late_fee_percentage?: number | null
           mercadopago_access_token?: string | null
           mercadopago_public_key?: string | null
           updated_at?: string
@@ -37,6 +41,8 @@ export type Database = {
           admin_id?: string | null
           created_at?: string
           id?: string
+          late_fee_grace_days?: number | null
+          late_fee_percentage?: number | null
           mercadopago_access_token?: string | null
           mercadopago_public_key?: string | null
           updated_at?: string
@@ -129,6 +135,63 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      late_fees: {
+        Row: {
+          created_at: string
+          days_late: number
+          fee_percentage: number
+          id: string
+          late_fee_amount: number
+          original_amount: number
+          payment_month: string
+          property_id: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          days_late: number
+          fee_percentage: number
+          id?: string
+          late_fee_amount: number
+          original_amount: number
+          payment_month: string
+          property_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          days_late?: number
+          fee_percentage?: number
+          id?: string
+          late_fee_amount?: number
+          original_amount?: number
+          payment_month?: string
+          property_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "late_fees_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "late_fees_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_proofs: {
         Row: {
@@ -301,6 +364,7 @@ export type Database = {
           is_occupied: boolean | null
           name: string
           rent_amount: number
+          security_deposit: number | null
           tenant_id: string | null
           updated_at: string
         }
@@ -318,6 +382,7 @@ export type Database = {
           is_occupied?: boolean | null
           name: string
           rent_amount: number
+          security_deposit?: number | null
           tenant_id?: string | null
           updated_at?: string
         }
@@ -335,6 +400,7 @@ export type Database = {
           is_occupied?: boolean | null
           name?: string
           rent_amount?: number
+          security_deposit?: number | null
           tenant_id?: string | null
           updated_at?: string
         }

@@ -13,6 +13,7 @@ const propertySchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   address: z.string().min(1, "Endereço é obrigatório"),
   rent: z.string().min(1, "Valor do aluguel é obrigatório"),
+  securityDeposit: z.string().min(1, "Valor da caução é obrigatório"),
   description: z.string().optional(),
   bedrooms: z.string().min(1, "Número de quartos é obrigatório"),
   bathrooms: z.string().min(1, "Número de banheiros é obrigatório"),
@@ -39,6 +40,7 @@ export const PropertyForm = ({ onClose, onSubmit, initialData, isEditing = false
       name: initialData?.name || "",
       address: initialData?.address || "",
       rent: initialData?.rent || "",
+      securityDeposit: initialData?.securityDeposit || "",
       description: initialData?.description || "",
       bedrooms: initialData?.bedrooms || "",
       bathrooms: initialData?.bathrooms || "",
@@ -121,18 +123,32 @@ export const PropertyForm = ({ onClose, onSubmit, initialData, isEditing = false
 
                 <FormField
                   control={form.control}
-                  name="area"
+                  name="securityDeposit"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Área (m²)</FormLabel>
+                      <FormLabel>Caução/Depósito (R$)</FormLabel>
                       <FormControl>
-                        <Input placeholder="75" type="number" {...field} />
+                        <Input placeholder="2500.00" type="number" step="0.01" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="area"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Área (m²)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="75" type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
