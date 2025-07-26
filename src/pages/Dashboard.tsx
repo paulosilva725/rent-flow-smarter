@@ -771,12 +771,63 @@ const Dashboard = () => {
           <p className="text-muted-foreground">{currentProperty?.name} - {currentProperty?.address}</p>
         </div>
 
+        {/* Status do Aluguel */}
+        <div className="grid gap-6 md:grid-cols-3 mb-6">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Status do Aluguel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <Badge 
+                  className="text-lg px-4 py-2 mb-2"
+                  variant={
+                    currentTenant?.paymentStatus === "paid" ? "default" : 
+                    currentTenant?.paymentStatus === "pending" ? "secondary" : "destructive"
+                  }
+                >
+                  {currentTenant?.paymentStatus === "paid" ? "EM DIA" : 
+                   currentTenant?.paymentStatus === "pending" ? "PENDENTE" : "VENCIDO"}
+                </Badge>
+                <p className="text-sm text-muted-foreground">
+                  {currentTenant?.paymentStatus === "paid" ? "Pagamento em dia" : 
+                   currentTenant?.paymentStatus === "pending" ? "Aguardando pagamento" : "Pagamento em atraso"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Próximo Vencimento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-primary">05/02/2024</p>
+                <p className="text-sm text-muted-foreground">Valor: R$ {currentTenant?.rentAmount}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Imóvel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="font-semibold">{currentProperty?.name}</p>
+                <p className="text-sm text-muted-foreground">{currentProperty?.address}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Informações do Imóvel */}
         <Card className="shadow-card mb-6">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Building2 className="h-5 w-5 mr-2" />
-              Informações do Imóvel
+              Detalhes do Imóvel
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -786,7 +837,7 @@ const Dashboard = () => {
                 <p className="font-medium">{currentProperty?.address}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Aluguel</p>
+                <p className="text-sm text-muted-foreground">Aluguel Mensal</p>
                 <p className="font-medium">R$ {currentProperty?.rent}</p>
               </div>
               <div>

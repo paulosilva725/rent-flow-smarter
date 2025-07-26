@@ -206,6 +206,7 @@ export const PropertyManagement = ({
                 <TableHead>Aluguel</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Inquilino</TableHead>
+                <TableHead>Status Pagamento</TableHead>
                 <TableHead>Contrato</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
@@ -225,6 +226,23 @@ export const PropertyManagement = ({
                     </TableCell>
                     <TableCell>
                       {tenant ? tenant.name : "Nenhum"}
+                    </TableCell>
+                    <TableCell>
+                      {tenant ? (
+                        <Badge 
+                          variant={
+                            tenant.paymentStatus === 'paid' ? 'default' : 
+                            tenant.paymentStatus === 'pending' ? 'secondary' : 
+                            'destructive'
+                          }
+                        >
+                          {tenant.paymentStatus === 'paid' ? 'Pago' : 
+                           tenant.paymentStatus === 'pending' ? 'Pendente' : 
+                           'Vencido'}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
