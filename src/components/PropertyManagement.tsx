@@ -31,6 +31,8 @@ interface Property {
   isOccupied: boolean;
   tenantId?: string;
   contractFile?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
 }
 
 interface Tenant {
@@ -54,6 +56,7 @@ interface PropertyManagementProps {
   onUpdateTenant: (tenant: Tenant) => void;
   onDeleteTenant: (id: string) => void;
   onUploadContract: (propertyId: string, file: File) => void;
+  onCreateProperty?: () => void;
 }
 
 export const PropertyManagement = ({ 
@@ -63,7 +66,8 @@ export const PropertyManagement = ({
   onDeleteProperty,
   onUpdateTenant,
   onDeleteTenant,
-  onUploadContract
+  onUploadContract,
+  onCreateProperty
 }: PropertyManagementProps) => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -191,11 +195,20 @@ export const PropertyManagement = ({
       {/* Gerenciamento de Imóveis */}
       <Card className="shadow-card">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Building2 className="h-5 w-5 mr-2" />
-            Gerenciar Imóveis
-          </CardTitle>
-          <CardDescription>Visualize e gerencie todos os imóveis cadastrados</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center">
+                <Building2 className="h-5 w-5 mr-2" />
+                Gerenciar Imóveis
+              </CardTitle>
+              <CardDescription>Visualize e gerencie todos os imóveis cadastrados</CardDescription>
+            </div>
+            {onCreateProperty && (
+              <Button onClick={onCreateProperty}>
+                Cadastrar Propriedade
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -208,6 +221,7 @@ export const PropertyManagement = ({
                 <TableHead>Inquilino</TableHead>
                 <TableHead>Status Pagamento</TableHead>
                 <TableHead>Contrato</TableHead>
+                <TableHead>Datas do Contrato</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -262,22 +276,36 @@ export const PropertyManagement = ({
                           {property.contractFile ? "Atualizar" : "Upload"}
                         </Button>
                         {property.contractFile && (
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenPDF(property.id, property.contractFile!)}
-                              className="text-primary hover:text-primary-foreground"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Abrir PDF
-                            </Button>
-                            <Badge variant="outline" className="text-green-600 border-green-600">
-                              {property.contractFile}
-                            </Badge>
-                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenPDF(property.id, property.contractFile!)}
+                            className="text-primary hover:text-primary-foreground"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Baixar PDF
+                          </Button>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {property.contractStartDate && property.contractEndDate ? (
+                        <div className="text-sm">
+                          <div>Início: {new Date(property.contractStartDate).toLocaleDateString('pt-BR')}</div>
+                          <div>Fim: {new Date(property.contractEndDate).toLocaleDateString('pt-BR')}</div>
+                          {(() => {
+                            const daysUntilExpiry = Math.ceil((new Date(property.contractEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                            if (daysUntilExpiry <= 0) {
+                              return <div className="text-red-600 text-xs">⚠️ Vencido há {Math.abs(daysUntilExpiry)} dias</div>;
+                            } else if (daysUntilExpiry <= 30) {
+                              return <div className="text-yellow-600 text-xs">⚠️ Vence em {daysUntilExpiry} dias</div>;
+                            }
+                            return <div className="text-green-600 text-xs">✅ Em dia</div>;
+                          })()}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Sem contrato</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
@@ -285,6 +313,7 @@ export const PropertyManagement = ({
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedProperty(property)}
+                          title="Editar propriedade"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Button>
@@ -292,9 +321,21 @@ export const PropertyManagement = ({
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDeleteProperty(property.id)}
+                          title="Excluir propriedade"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
+                        {tenant && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTenant(tenant.id)}
+                            title="Remover inquilino"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <Users className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

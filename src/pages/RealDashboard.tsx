@@ -10,6 +10,7 @@ import RealTimeChat from "@/components/RealTimeChat";
 import PaymentArea from "@/components/PaymentArea";
 import MercadoPagoSettings from "@/components/MercadoPagoSettings";
 import { PropertyForm } from "@/components/PropertyForm";
+import { PropertyManagement } from "@/components/PropertyManagement";
 import { TenantForm } from "@/components/TenantForm";
 import { TenantAssignment } from "@/components/TenantAssignment";
 import { PaymentProof } from "@/components/PaymentProof";
@@ -48,12 +49,10 @@ interface RepairRequestData {
   priority: string;
   status: string;
   created_at: string;
-  property: {
-    name: string;
-  };
-  tenant: {
-    name: string;
-  };
+  tenant_id?: string;
+  property_id?: string;
+  property?: { name: string };
+  tenant?: { name: string };
 }
 
 const Dashboard = () => {
@@ -378,50 +377,242 @@ const Dashboard = () => {
     }
   };
 
-  const createRepairRequest = async (title: string, description: string, priority: string) => {
-    if (!user || !userProperty) return;
+  const createRepairRequest = async (request: { title: string, description: string, priority: string, category: string, tenantId: string, propertyId: string }) => {
+    try {
+      const { error } = await supabase
+        .from('repair_requests')
+        .insert([
+          {
+            title: request.title,
+            description: request.description,
+            priority: request.priority,
+            tenant_id: request.tenantId,
+            property_id: request.propertyId
+          }
+        ]);
 
-    const { error } = await supabase
-      .from("repair_requests")
-      .insert({
-        tenant_id: user.id,
-        property_id: userProperty.id,
-        title,
-        description,
-        priority,
+      if (error) throw error;
+      
+      toast({
+        title: "Solicitação criada!",
+        description: "Sua solicitação de reparo foi enviada."
       });
 
-    if (error) {
+      // Recarregar dados
+      if (user?.role === 'admin') {
+        fetchAdminData();
+      } else {
+        fetchTenantData(user?.id || '');
+      }
+    } catch (error) {
+      console.error('Error creating repair request:', error);
       toast({
-        title: "Erro ao criar solicitação",
-        description: error.message,
-        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao criar solicitação de reparo.",
+        variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Solicitação criada",
-        description: "Sua solicitação de reparo foi enviada com sucesso.",
-      });
-      fetchTenantData(user.id);
     }
   };
 
-  const updateRepairStatus = async (requestId: string, status: string) => {
+  const updatePaymentProofStatus = async (proofId: string, status: string, rejectionReason?: string) => {
+    try {
+      const { error } = await supabase
+        .from('payment_proofs')
+        .update({ 
+          status,
+          rejection_reason: rejectionReason || null
+        })
+        .eq('id', proofId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Status atualizado!",
+        description: `Comprovante ${status === 'approved' ? 'aprovado' : 'rejeitado'} com sucesso.`
+      });
+
+      if (user?.role === 'admin') {
+        fetchAdminData();
+      }
+    } catch (error) {
+      console.error('Error updating payment proof:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status do comprovante.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateRepairRequestStatus = async (requestId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('repair_requests')
+        .update({ status })
+        .eq('id', requestId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Status atualizado!",
+        description: "Status da solicitação foi atualizado."
+      });
+
+      if (user?.role === 'admin') {
+        fetchAdminData();
+      }
+    } catch (error) {
+      console.error('Error updating repair request:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleUpdateProperty = async (property: any) => {
     const { error } = await supabase
-      .from("repair_requests")
-      .update({ status })
-      .eq("id", requestId);
+      .from("properties")
+      .update({
+        name: property.name,
+        address: property.address,
+        rent_amount: parseFloat(property.rent),
+        description: property.description,
+        bedrooms: property.bedrooms ? parseInt(property.bedrooms) : null,
+        bathrooms: property.bathrooms ? parseInt(property.bathrooms) : null,
+        area: property.area ? parseFloat(property.area) : null,
+      })
+      .eq("id", property.id);
 
     if (error) {
       toast({
-        title: "Erro ao atualizar status",
+        title: "Erro ao atualizar propriedade",
         description: error.message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Status atualizado",
-        description: "O status da solicitação foi atualizado.",
+        title: "Propriedade atualizada",
+        description: "A propriedade foi atualizada com sucesso.",
+      });
+      fetchAdminData();
+    }
+  };
+
+  const handleDeleteProperty = async (propertyId: string) => {
+    const { error } = await supabase
+      .from("properties")
+      .delete()
+      .eq("id", propertyId);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir propriedade",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Propriedade excluída",
+        description: "A propriedade foi excluída com sucesso.",
+      });
+      fetchAdminData();
+    }
+  };
+
+  const handleUpdateTenant = async (tenant: any) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone,
+        cpf: tenant.document,
+        status: tenant.paymentStatus,
+      })
+      .eq("id", tenant.id);
+
+    if (error) {
+      toast({
+        title: "Erro ao atualizar inquilino",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Inquilino atualizado",
+        description: "Os dados do inquilino foram atualizados.",
+      });
+      fetchAdminData();
+    }
+  };
+
+  const handleDeleteTenant = async (tenantId: string) => {
+    // Primeiro liberar propriedade
+    await supabase
+      .from("properties")
+      .update({
+        is_occupied: false,
+        tenant_id: null,
+        contract_start_date: null,
+        contract_end_date: null,
+      })
+      .eq("tenant_id", tenantId);
+
+    // Depois excluir inquilino
+    const { error } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", tenantId);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir inquilino",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Inquilino removido",
+        description: "O inquilino foi removido do sistema.",
+      });
+      fetchAdminData();
+    }
+  };
+
+  const handleUploadContract = async (propertyId: string, file: File) => {
+    // Upload do arquivo para o storage
+    const fileName = `contracts/${propertyId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from('contracts')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      toast({
+        title: "Erro no upload",
+        description: uploadError.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Atualizar URL no banco
+    const { error: updateError } = await supabase
+      .from("properties")
+      .update({ contract_file_url: fileName })
+      .eq("id", propertyId);
+
+    if (updateError) {
+      toast({
+        title: "Erro ao salvar contrato",
+        description: updateError.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Contrato salvo",
+        description: "O contrato foi anexado à propriedade.",
       });
       fetchAdminData();
     }
@@ -476,57 +667,41 @@ const Dashboard = () => {
             </TabsList>
 
             <TabsContent value="properties">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Gerenciar Propriedades</CardTitle>
-                  <Button onClick={() => setShowPropertyForm(true)}>
-                    Cadastrar Propriedade
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {properties.length === 0 ? (
-                      <p className="text-muted-foreground">Nenhuma propriedade cadastrada.</p>
-                    ) : (
-                      properties.map((property) => {
-                        const tenant = tenants.find(t => t.id === property.tenant_id);
-                        const contractStatus = property.contract_end_date ? 
-                          Math.ceil((new Date(property.contract_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
-                        
-                        return (
-                          <div key={property.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div className="flex-1">
-                              <h3 className="font-medium">{property.name}</h3>
-                              <p className="text-sm text-muted-foreground">{property.address}</p>
-                              <p className="text-sm">R$ {property.rent_amount.toFixed(2)}</p>
-                              {property.is_occupied && tenant && (
-                                <div className="mt-2 space-y-1">
-                                  <p className="text-sm"><strong>Inquilino:</strong> {tenant.name}</p>
-                                  {property.contract_start_date && (
-                                    <p className="text-xs text-muted-foreground">
-                                      Contrato: {new Date(property.contract_start_date).toLocaleDateString('pt-BR')} - {property.contract_end_date ? new Date(property.contract_end_date).toLocaleDateString('pt-BR') : 'N/A'}
-                                    </p>
-                                  )}
-                                  {contractStatus !== null && (
-                                    <p className={`text-xs ${contractStatus <= 0 ? 'text-red-600' : contractStatus <= 30 ? 'text-yellow-600' : 'text-green-600'}`}>
-                                      {contractStatus <= 0 ? `Vencido há ${Math.abs(contractStatus)} dias` : 
-                                       contractStatus <= 30 ? `Vence em ${contractStatus} dias` : 
-                                       'Contrato em dia'}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-sm">
-                              {property.is_occupied ? "Ocupada" : "Disponível"}
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <PropertyManagement
+                properties={properties.map(p => ({
+                  id: p.id,
+                  name: p.name,
+                  rent: p.rent_amount.toString(),
+                  address: p.address,
+                  description: p.description,
+                  bedrooms: p.bedrooms?.toString(),
+                  bathrooms: p.bathrooms?.toString(),
+                  area: p.area?.toString(),
+                  isOccupied: p.is_occupied,
+                  tenantId: p.tenant_id,
+                  contractFile: p.contract_file_url,
+                  contractStartDate: p.contract_start_date,
+                  contractEndDate: p.contract_end_date
+                }))}
+                tenants={tenants.map(t => ({
+                  id: t.id,
+                  name: t.name,
+                  email: t.email,
+                  phone: t.phone,
+                  document: t.cpf,
+                  propertyId: properties.find(p => p.tenant_id === t.id)?.id || '',
+                  rentAmount: properties.find(p => p.tenant_id === t.id)?.rent_amount.toString(),
+                  startDate: properties.find(p => p.tenant_id === t.id)?.contract_start_date,
+                  endDate: properties.find(p => p.tenant_id === t.id)?.contract_end_date,
+                  paymentStatus: 'pending' as const
+                }))}
+                onUpdateProperty={handleUpdateProperty}
+                onDeleteProperty={handleDeleteProperty}
+                onUpdateTenant={handleUpdateTenant}
+                onDeleteTenant={handleDeleteTenant}
+                onUploadContract={handleUploadContract}
+                onCreateProperty={() => setShowPropertyForm(true)}
+              />
             </TabsContent>
 
             <TabsContent value="tenants">
@@ -573,15 +748,29 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="repairs">
-              <div className="space-y-4">
-                {repairRequests.map((request) => (
-                  <div key={request.id} className="p-4 border rounded-lg">
-                    <h3 className="font-medium">{request.title}</h3>
-                    <p className="text-sm text-muted-foreground">{request.description}</p>
-                    <p className="text-sm">Status: {request.status}</p>
-                  </div>
-                ))}
-              </div>
+              <RepairRequest
+                userType="admin"
+                requests={repairRequests.map(req => ({
+                  id: req.id,
+                  title: req.title,
+                  description: req.description,
+                  category: 'other' as const,
+                  priority: req.priority as any,
+                  status: req.status as any,
+                  requestDate: new Date(req.created_at).toLocaleDateString(),
+                  tenantId: req.tenant_id || '',
+                  propertyId: req.property_id || ''
+                }))}
+                onCreateRequest={(request) => createRepairRequest({
+                  title: request.title,
+                  description: request.description,
+                  priority: request.priority,
+                  category: request.category,
+                  tenantId: request.tenantId,
+                  propertyId: request.propertyId
+                })}
+                onUpdateStatus={updateRepairRequestStatus}
+              />
             </TabsContent>
 
             <TabsContent value="payments">
@@ -589,7 +778,8 @@ const Dashboard = () => {
                 <PaymentProof
                   userType="admin"
                   proofs={paymentProofs}
-                  onUpdateProofStatus={handleUpdateProofStatus}
+                  onUploadProof={handleUploadPaymentProof}
+                  onUpdateProofStatus={updatePaymentProofStatus}
                 />
               </div>
             </TabsContent>
@@ -666,8 +856,26 @@ const Dashboard = () => {
                 userType="tenant"
                 currentTenantId={user.id}
                 currentPropertyId={userProperty?.id}
-                requests={repairRequests}
-                onCreateRequest={createRepairRequest}
+                requests={repairRequests.map(req => ({
+                  id: req.id,
+                  title: req.title,
+                  description: req.description,
+                  category: 'other' as const,
+                  priority: req.priority as any,
+                  status: req.status as any,
+                  requestDate: new Date(req.created_at).toLocaleDateString(),
+                  tenantId: req.tenant_id || '',
+                  propertyId: req.property_id || ''
+                }))}
+                onCreateRequest={(request) => createRepairRequest({
+                  title: request.title,
+                  description: request.description,
+                  priority: request.priority,
+                  category: request.category,
+                  tenantId: request.tenantId,
+                  propertyId: request.propertyId
+                })}
+                onUpdateStatus={updateRepairRequestStatus}
               />
             </TabsContent>
 
@@ -677,6 +885,7 @@ const Dashboard = () => {
                   userType="tenant"
                   proofs={paymentProofs}
                   onUploadProof={handleUploadPaymentProof}
+                  onUpdateProofStatus={updatePaymentProofStatus}
                 />
               </div>
             </TabsContent>
