@@ -73,18 +73,18 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const currentDate = new Date().toLocaleDateString('pt-BR');
     
     // Header
-    doc.setFontSize(20);
+    doc.setFontSize(16);
     doc.text('Relatório Financeiro', 20, 20);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.text(`Gerado em: ${currentDate}`, 20, 30);
     
     if (dateRange.start && dateRange.end) {
-      doc.text(`Período: ${dateRange.start} a ${dateRange.end}`, 20, 40);
+      doc.text(`Período: ${dateRange.start} a ${dateRange.end}`, 20, 38);
     }
     
     // Summary
-    doc.setFontSize(16);
-    doc.text('Resumo Financeiro', 20, 60);
+    doc.setFontSize(12);
+    doc.text('Resumo Financeiro', 20, 52);
     
     const totalProperties = properties.length;
     const occupiedProperties = properties.filter(p => p.is_occupied).length;
@@ -92,30 +92,30 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const totalPaid = payments.filter(p => p.status === 'approved').reduce((sum, p) => sum + p.amount, 0);
     const totalPending = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0);
     
-    doc.setFontSize(12);
-    doc.text(`Total de Imóveis: ${totalProperties}`, 20, 80);
-    doc.text(`Imóveis Ocupados: ${occupiedProperties}`, 20, 90);
-    doc.text(`Receita Potencial: R$ ${totalRent.toFixed(2)}`, 20, 100);
-    doc.text(`Pagamentos Recebidos: R$ ${totalPaid.toFixed(2)}`, 20, 110);
-    doc.text(`Pagamentos Pendentes: R$ ${totalPending.toFixed(2)}`, 20, 120);
+    doc.setFontSize(9);
+    doc.text(`Total de Imóveis: ${totalProperties}`, 20, 65);
+    doc.text(`Imóveis Ocupados: ${occupiedProperties}`, 20, 72);
+    doc.text(`Receita Potencial: R$ ${totalRent.toFixed(2)}`, 20, 79);
+    doc.text(`Pagamentos Recebidos: R$ ${totalPaid.toFixed(2)}`, 20, 86);
+    doc.text(`Pagamentos Pendentes: R$ ${totalPending.toFixed(2)}`, 20, 93);
     
     // Properties details
-    doc.setFontSize(16);
-    doc.text('Detalhes dos Imóveis', 20, 150);
+    doc.setFontSize(12);
+    doc.text('Detalhes dos Imóveis', 20, 110);
     
-    let yPosition = 170;
+    let yPosition = 125;
     properties.forEach((property, index) => {
-      if (yPosition > 250) {
+      if (yPosition > 260) {
         doc.addPage();
         yPosition = 20;
       }
       
-      doc.setFontSize(12);
+      doc.setFontSize(9);
       doc.text(`${index + 1}. ${property.name}`, 20, yPosition);
-      doc.text(`   Endereço: ${property.address}`, 20, yPosition + 10);
-      doc.text(`   Aluguel: R$ ${property.rent_amount.toFixed(2)}`, 20, yPosition + 20);
-      doc.text(`   Status: ${property.is_occupied ? 'Ocupado' : 'Disponível'}`, 20, yPosition + 30);
-      yPosition += 50;
+      doc.text(`   Endereço: ${property.address}`, 20, yPosition + 8);
+      doc.text(`   Aluguel: R$ ${property.rent_amount.toFixed(2)}`, 20, yPosition + 16);
+      doc.text(`   Status: ${property.is_occupied ? 'Ocupado' : 'Disponível'}`, 20, yPosition + 24);
+      yPosition += 35;
     });
     
     doc.save('relatorio-financeiro.pdf');
@@ -126,9 +126,9 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const currentDate = new Date().toLocaleDateString('pt-BR');
     
     // Header
-    doc.setFontSize(20);
+    doc.setFontSize(16);
     doc.text('Relatório de Ocupação', 20, 20);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.text(`Gerado em: ${currentDate}`, 20, 30);
     
     // Statistics
@@ -137,34 +137,34 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const vacantProperties = totalProperties - occupiedProperties;
     const occupancyRate = totalProperties > 0 ? (occupiedProperties / totalProperties * 100).toFixed(1) : 0;
     
-    doc.setFontSize(16);
-    doc.text('Estatísticas de Ocupação', 20, 60);
     doc.setFontSize(12);
-    doc.text(`Total de Imóveis: ${totalProperties}`, 20, 80);
-    doc.text(`Imóveis Ocupados: ${occupiedProperties}`, 20, 90);
-    doc.text(`Imóveis Disponíveis: ${vacantProperties}`, 20, 100);
-    doc.text(`Taxa de Ocupação: ${occupancyRate}%`, 20, 110);
+    doc.text('Estatísticas de Ocupação', 20, 45);
+    doc.setFontSize(9);
+    doc.text(`Total de Imóveis: ${totalProperties}`, 20, 58);
+    doc.text(`Imóveis Ocupados: ${occupiedProperties}`, 20, 65);
+    doc.text(`Imóveis Disponíveis: ${vacantProperties}`, 20, 72);
+    doc.text(`Taxa de Ocupação: ${occupancyRate}%`, 20, 79);
     
     // Properties list
-    doc.setFontSize(16);
-    doc.text('Lista de Imóveis', 20, 140);
+    doc.setFontSize(12);
+    doc.text('Lista de Imóveis', 20, 95);
     
-    let yPosition = 160;
+    let yPosition = 110;
     properties.forEach((property, index) => {
-      if (yPosition > 250) {
+      if (yPosition > 260) {
         doc.addPage();
         yPosition = 20;
       }
       
       const tenant = tenants.find(t => t.id === property.tenant_id);
       
-      doc.setFontSize(12);
+      doc.setFontSize(9);
       doc.text(`${index + 1}. ${property.name}`, 20, yPosition);
-      doc.text(`   Status: ${property.is_occupied ? 'Ocupado' : 'Disponível'}`, 20, yPosition + 10);
+      doc.text(`   Status: ${property.is_occupied ? 'Ocupado' : 'Disponível'}`, 20, yPosition + 8);
       if (tenant) {
-        doc.text(`   Inquilino: ${tenant.name}`, 20, yPosition + 20);
+        doc.text(`   Inquilino: ${tenant.name}`, 20, yPosition + 16);
       }
-      yPosition += 40;
+      yPosition += 28;
     });
     
     doc.save('relatorio-ocupacao.pdf');
@@ -175,24 +175,24 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const currentDate = new Date().toLocaleDateString('pt-BR');
     
     // Header
-    doc.setFontSize(20);
+    doc.setFontSize(16);
     doc.text('Relatório de Inquilinos', 20, 20);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.text(`Gerado em: ${currentDate}`, 20, 30);
     
     // Summary
-    doc.setFontSize(16);
-    doc.text('Resumo de Inquilinos', 20, 60);
     doc.setFontSize(12);
-    doc.text(`Total de Inquilinos: ${tenants.length}`, 20, 80);
+    doc.text('Resumo de Inquilinos', 20, 45);
+    doc.setFontSize(9);
+    doc.text(`Total de Inquilinos: ${tenants.length}`, 20, 58);
     
     // Tenants list
-    doc.setFontSize(16);
-    doc.text('Lista de Inquilinos', 20, 110);
+    doc.setFontSize(12);
+    doc.text('Lista de Inquilinos', 20, 75);
     
-    let yPosition = 130;
+    let yPosition = 90;
     tenants.forEach((tenant, index) => {
-      if (yPosition > 250) {
+      if (yPosition > 260) {
         doc.addPage();
         yPosition = 20;
       }
@@ -202,14 +202,14 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
       const paidCount = tenantPayments.filter(p => p.status === 'approved').length;
       const pendingCount = tenantPayments.filter(p => p.status === 'pending').length;
       
-      doc.setFontSize(12);
+      doc.setFontSize(9);
       doc.text(`${index + 1}. ${tenant.name}`, 20, yPosition);
-      doc.text(`   Email: ${tenant.email}`, 20, yPosition + 10);
+      doc.text(`   Email: ${tenant.email}`, 20, yPosition + 8);
       if (property) {
-        doc.text(`   Imóvel: ${property.name}`, 20, yPosition + 20);
+        doc.text(`   Imóvel: ${property.name}`, 20, yPosition + 16);
       }
-      doc.text(`   Pagamentos: ${paidCount} pagos, ${pendingCount} pendentes`, 20, yPosition + 30);
-      yPosition += 50;
+      doc.text(`   Pagamentos: ${paidCount} pagos, ${pendingCount} pendentes`, 20, yPosition + 24);
+      yPosition += 35;
     });
     
     doc.save('relatorio-inquilinos.pdf');
@@ -220,9 +220,9 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const currentDate = new Date().toLocaleDateString('pt-BR');
     
     // Header
-    doc.setFontSize(20);
+    doc.setFontSize(16);
     doc.text('Relatório de Reparos', 20, 20);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.text(`Gerado em: ${currentDate}`, 20, 30);
     
     // Summary
@@ -231,21 +231,21 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
     const inProgressRequests = repairRequests.filter(r => r.status === 'in-progress').length;
     const completedRequests = repairRequests.filter(r => r.status === 'completed').length;
     
-    doc.setFontSize(16);
-    doc.text('Resumo de Reparos', 20, 60);
     doc.setFontSize(12);
-    doc.text(`Total de Solicitações: ${totalRequests}`, 20, 80);
-    doc.text(`Pendentes: ${pendingRequests}`, 20, 90);
-    doc.text(`Em Andamento: ${inProgressRequests}`, 20, 100);
-    doc.text(`Concluídos: ${completedRequests}`, 20, 110);
+    doc.text('Resumo de Reparos', 20, 45);
+    doc.setFontSize(9);
+    doc.text(`Total de Solicitações: ${totalRequests}`, 20, 58);
+    doc.text(`Pendentes: ${pendingRequests}`, 20, 65);
+    doc.text(`Em Andamento: ${inProgressRequests}`, 20, 72);
+    doc.text(`Concluídos: ${completedRequests}`, 20, 79);
     
     // Requests list
-    doc.setFontSize(16);
-    doc.text('Lista de Solicitações', 20, 140);
+    doc.setFontSize(12);
+    doc.text('Lista de Solicitações', 20, 95);
     
-    let yPosition = 160;
+    let yPosition = 110;
     repairRequests.forEach((request, index) => {
-      if (yPosition > 230) {
+      if (yPosition > 245) {
         doc.addPage();
         yPosition = 20;
       }
@@ -253,14 +253,14 @@ export const ReportsSystem = ({ properties, tenants, payments, repairRequests }:
       const property = properties.find(p => p.id === request.propertyId);
       const tenant = tenants.find(t => t.id === request.tenantId);
       
-      doc.setFontSize(12);
+      doc.setFontSize(9);
       doc.text(`${index + 1}. ${request.title}`, 20, yPosition);
-      doc.text(`   Categoria: ${request.category}`, 20, yPosition + 10);
-      doc.text(`   Prioridade: ${request.priority}`, 20, yPosition + 20);
-      doc.text(`   Status: ${request.status}`, 20, yPosition + 30);
-      if (property) doc.text(`   Imóvel: ${property.name}`, 20, yPosition + 40);
-      if (tenant) doc.text(`   Inquilino: ${tenant.name}`, 20, yPosition + 50);
-      yPosition += 70;
+      doc.text(`   Categoria: ${request.category}`, 20, yPosition + 8);
+      doc.text(`   Prioridade: ${request.priority}`, 20, yPosition + 16);
+      doc.text(`   Status: ${request.status}`, 20, yPosition + 24);
+      if (property) doc.text(`   Imóvel: ${property.name}`, 20, yPosition + 32);
+      if (tenant) doc.text(`   Inquilino: ${tenant.name}`, 20, yPosition + 40);
+      yPosition += 50;
     });
     
     doc.save('relatorio-reparos.pdf');
