@@ -216,11 +216,14 @@ const Dashboard = () => {
   };
 
   const handleCreateTenant = async (data: any) => {
+    console.log("Dados recebidos para criar inquilino:", data);
+    
     // Primeiro criar o perfil do inquilino
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: "tempPassword123!", // Senha temporária
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           name: data.name,
           role: 'tenant',
@@ -228,7 +231,10 @@ const Dashboard = () => {
       }
     });
 
+    console.log("Resultado auth.signUp:", { authData, authError });
+
     if (authError) {
+      console.error("Erro no signUp:", authError);
       toast({
         title: "Erro ao criar inquilino",
         description: authError.message,
