@@ -219,136 +219,71 @@ const Dashboard = () => {
     console.log("Dados recebidos para criar inquilino:", data);
     
     try {
-      // Primeiro criar o usuário
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: "tempPassword123!", // Senha temporária
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            name: data.name,
-            role: 'tenant',
-          }
-        }
-      });
+      // Verificar se já existe um perfil com este email
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .eq("email", data.email)
+        .single();
 
-      console.log("Resultado auth.signUp:", { authData, authError });
-
-      if (authError) {
-        console.error("Erro no signUp:", authError);
+      if (existingProfile) {
         toast({
-          title: "Erro ao criar inquilino",
-          description: authError.message,
+          title: "Email já cadastrado",
+          description: "Já existe um usuário com este email no sistema.",
           variant: "destructive",
         });
         return;
       }
 
-      if (!authData.user) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível criar o usuário.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Criar o perfil manualmente (caso o trigger não funcione)
-      const { data: profileData, error: profileInsertError } = await supabase
+      // Criar o perfil do inquilino diretamente (sem criar usuário de autenticação)
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .insert({
-          user_id: authData.user.id,
           name: data.name,
           email: data.email,
           role: 'tenant',
           phone: data.phone,
           cpf: data.document,
+          status: 'active'
         })
         .select("id")
         .single();
 
-      if (profileInsertError) {
-        // Se der erro de duplicação, tentar atualizar o perfil existente
-        console.log("Perfil já existe, tentando atualizar...");
-        
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({
-            phone: data.phone,
-            cpf: data.document,
-          })
-          .eq("user_id", authData.user.id);
+      if (profileError) {
+        console.error("Erro ao criar perfil:", profileError);
+        toast({
+          title: "Erro ao criar inquilino",
+          description: profileError.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
-        if (updateError) {
-          console.error("Erro ao atualizar perfil:", updateError);
-          toast({
-            title: "Erro ao atualizar perfil",
-            description: updateError.message,
-            variant: "destructive",
-          });
-          return;
-        }
+      // Atribuir o inquilino ao imóvel
+      const { error: propertyError } = await supabase
+        .from("properties")
+        .update({
+          is_occupied: true,
+          tenant_id: profileData.id,
+          contract_start_date: data.startDate,
+          contract_end_date: data.endDate,
+          rent_amount: parseFloat(data.rentAmount)
+        })
+        .eq("id", data.propertyId);
 
-        // Buscar o perfil atualizado
-        const { data: existingProfile, error: fetchError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", authData.user.id)
-          .single();
-
-        if (fetchError || !existingProfile) {
-          toast({
-            title: "Erro ao buscar perfil",
-            description: "Não foi possível encontrar o perfil.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Atualizar propriedade com o perfil existente
-        const { error: propertyError } = await supabase
-          .from("properties")
-          .update({
-            is_occupied: true,
-            tenant_id: existingProfile.id,
-            contract_start_date: data.startDate,
-            contract_end_date: data.endDate,
-          })
-          .eq("id", data.propertyId);
-
-        if (propertyError) {
-          toast({
-            title: "Erro ao designar imóvel",
-            description: propertyError.message,
-            variant: "destructive",
-          });
-          return;
-        }
-      } else {
-        // Perfil criado com sucesso, atribuir ao imóvel
-        const { error: propertyError } = await supabase
-          .from("properties")
-          .update({
-            is_occupied: true,
-            tenant_id: profileData.id,
-            contract_start_date: data.startDate,
-            contract_end_date: data.endDate,
-          })
-          .eq("id", data.propertyId);
-
-        if (propertyError) {
-          toast({
-            title: "Erro ao designar imóvel",
-            description: propertyError.message,
-            variant: "destructive",
-          });
-          return;
-        }
+      if (propertyError) {
+        console.error("Erro ao atualizar propriedade:", propertyError);
+        toast({
+          title: "Erro ao designar imóvel",
+          description: propertyError.message,
+          variant: "destructive",
+        });
+        return;
       }
 
       toast({
-        title: "Inquilino cadastrado",
-        description: "O inquilino foi cadastrado e atribuído ao imóvel com sucesso.",
+        title: "Inquilino cadastrado com sucesso!",
+        description: "O inquilino foi cadastrado e atribuído ao imóvel.",
       });
       
       fetchAdminData();
