@@ -114,11 +114,34 @@ export const PropertyManagement = ({
   const handleFileUpload = (propertyId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Verificar se é um arquivo PDF
+      if (file.type !== 'application/pdf') {
+        toast({
+          title: "Arquivo inválido",
+          description: "Por favor, selecione um arquivo PDF.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Verificar tamanho do arquivo (máximo 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Arquivo muito grande",
+          description: "O arquivo deve ter no máximo 10MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       onUploadContract(propertyId, file);
       toast({
-        title: "Contrato enviado",
-        description: "O arquivo do contrato foi salvo com sucesso."
+        title: "Contrato salvo com sucesso!",
+        description: `Arquivo "${file.name}" foi anexado ao imóvel.`
       });
+      
+      // Limpar o input para permitir upload do mesmo arquivo novamente se necessário
+      event.target.value = '';
     }
   };
 

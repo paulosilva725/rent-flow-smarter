@@ -279,13 +279,28 @@ const Dashboard = () => {
   };
 
   const handleUploadContract = (propertyId: string, file: File) => {
-    // Simular upload do arquivo
-    const fileName = file.name;
-    setProperties(prev => prev.map(prop => 
-      prop.id === propertyId 
-        ? { ...prop, contractFile: fileName }
-        : prop
-    ));
+    // Simular upload do arquivo com validação
+    try {
+      const fileName = file.name;
+      const fileSize = (file.size / 1024 / 1024).toFixed(2); // Converter para MB
+      
+      setProperties(prev => prev.map(prop => 
+        prop.id === propertyId 
+          ? { ...prop, contractFile: fileName }
+          : prop
+      ));
+      
+      toast({
+        title: "Upload realizado com sucesso!",
+        description: `Contrato "${fileName}" (${fileSize}MB) salvo para o imóvel.`
+      });
+    } catch (error) {
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível salvar o arquivo. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCreateRepairRequest = (request: Omit<RepairRequest, 'id' | 'requestDate'>) => {
@@ -385,19 +400,31 @@ const Dashboard = () => {
 
   if (userType === "admin") {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <header className="border-b bg-background shadow-card">
-          <div className="flex h-16 items-center px-6">
-            <div className="flex items-center space-x-2">
-              <Building2 className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">RentManager Pro</h1>
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-muted/40">
+        <header className="bg-gradient-to-r from-primary/5 via-background to-primary/5 border-b border-primary/20 shadow-elegant">
+          <div className="flex h-20 items-center px-8">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-br from-primary to-primary-glow rounded-lg shadow-glow">
+                <Building2 className="h-8 w-8 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                  RentManager Pro
+                </h1>
+                <p className="text-sm text-muted-foreground">Gestão Inteligente de Imóveis</p>
+              </div>
             </div>
-            <div className="ml-auto flex items-center space-x-4">
-              <Button variant="outline" size="sm">
+            <div className="ml-auto flex items-center space-x-3">
+              <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-smooth">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Mensagens
+                {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length > 0 && (
+                  <Badge className="ml-2 bg-destructive text-destructive-foreground">
+                    {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length}
+                  </Badge>
+                )}
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-smooth">
                 <Settings className="h-4 w-4 mr-2" />
                 Configurações
               </Button>
@@ -405,52 +432,54 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <main className="p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-2">Dashboard do Administrador</h2>
-            <p className="text-muted-foreground">Visão geral do seu portfólio de imóveis</p>
+        <main className="p-8">
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold mb-3 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+              Dashboard do Administrador
+            </h2>
+            <p className="text-lg text-muted-foreground">Visão geral completa do seu portfólio de imóveis</p>
           </div>
 
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="overview" className="flex items-center space-x-2">
+          <Tabs defaultValue="overview" className="space-y-8">
+            <TabsList className="grid w-full grid-cols-6 h-12 bg-gradient-to-r from-muted/50 to-muted/30 p-1 rounded-xl shadow-card">
+              <TabsTrigger value="overview" className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <BarChart3 className="h-4 w-4" />
-                <span>Visão Geral</span>
+                <span className="hidden sm:inline">Visão Geral</span>
               </TabsTrigger>
-              <TabsTrigger value="management" className="flex items-center space-x-2">
+              <TabsTrigger value="management" className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <Settings className="h-4 w-4" />
-                <span>Gerenciar</span>
+                <span className="hidden sm:inline">Gerenciar</span>
               </TabsTrigger>
-              <TabsTrigger value="repairs" className="flex items-center space-x-2 relative">
+              <TabsTrigger value="repairs" className="flex items-center space-x-2 relative data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <Wrench className="h-4 w-4" />
-                <span>Reparos</span>
+                <span className="hidden sm:inline">Reparos</span>
                 {repairRequests.filter(r => r.status === 'pending').length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs animate-pulse">
                     {repairRequests.filter(r => r.status === 'pending').length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="payments" className="flex items-center space-x-2 relative">
+              <TabsTrigger value="payments" className="flex items-center space-x-2 relative data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <DollarSign className="h-4 w-4" />
-                <span>Comprovantes</span>
+                <span className="hidden sm:inline">Comprovantes</span>
                 {paymentProofs.filter(p => p.status === 'pending').length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs animate-pulse">
                     {paymentProofs.filter(p => p.status === 'pending').length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center space-x-2 relative">
+              <TabsTrigger value="chat" className="flex items-center space-x-2 relative data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <MessageSquare className="h-4 w-4" />
-                <span>Chat</span>
+                <span className="hidden sm:inline">Chat</span>
                 {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs animate-pulse">
                     {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="actions" className="flex items-center space-x-2">
+              <TabsTrigger value="actions" className="flex items-center space-x-2 data-[state=active]:bg-background data-[state=active]:shadow-md transition-smooth">
                 <FileText className="h-4 w-4" />
-                <span>Ações Avançadas</span>
+                <span className="hidden sm:inline">Ações</span>
               </TabsTrigger>
             </TabsList>
 
