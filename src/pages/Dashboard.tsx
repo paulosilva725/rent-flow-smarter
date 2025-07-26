@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { PropertyForm } from "@/components/PropertyForm";
+import { TenantForm } from "@/components/TenantForm";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
   Users, 
@@ -16,6 +19,16 @@ import {
 
 const Dashboard = () => {
   const [userType] = useState<"admin" | "tenant">("admin");
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [showTenantForm, setShowTenantForm] = useState(false);
+  const [properties, setProperties] = useState([
+    { id: "1", name: "Apartamento 101", rent: "2500.00", address: "Rua A, 123" },
+    { id: "2", name: "Casa A", rent: "3200.00", address: "Rua B, 456" },
+  ]);
+  const [tenants, setTenants] = useState([
+    { id: "1", name: "João Silva", propertyId: "1", email: "joao@email.com" },
+  ]);
+  const { toast } = useToast();
 
   const stats = [
     {
@@ -59,6 +72,45 @@ const Dashboard = () => {
     { id: 2, task: "Renovação contrato - Maria Santos", date: "22/01/2024", priority: "medium" },
     { id: 3, task: "Manutenção - Casa B", date: "25/01/2024", priority: "low" },
   ];
+
+  const handlePropertySubmit = async (data: any) => {
+    const newProperty = {
+      id: Date.now().toString(),
+      name: data.name,
+      rent: data.rent,
+      address: data.address,
+      description: data.description,
+      bedrooms: data.bedrooms,
+      bathrooms: data.bathrooms,
+      area: data.area,
+    };
+    
+    setProperties(prev => [...prev, newProperty]);
+    toast({
+      title: "Imóvel cadastrado!",
+      description: `${data.name} foi cadastrado com sucesso.`,
+    });
+  };
+
+  const handleTenantSubmit = async (data: any) => {
+    const newTenant = {
+      id: Date.now().toString(),
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      document: data.document,
+      propertyId: data.propertyId,
+      rentAmount: data.rentAmount,
+      startDate: data.startDate,
+      endDate: data.endDate,
+    };
+    
+    setTenants(prev => [...prev, newTenant]);
+    toast({
+      title: "Inquilino cadastrado!",
+      description: `${data.name} foi cadastrado com sucesso.`,
+    });
+  };
 
   if (userType === "admin") {
     return (
@@ -183,11 +235,18 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
-                  <Button className="h-20 flex-col space-y-2">
+                  <Button 
+                    className="h-20 flex-col space-y-2"
+                    onClick={() => setShowPropertyForm(true)}
+                  >
                     <Building2 className="h-6 w-6" />
                     <span>Novo Imóvel</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-20 flex-col space-y-2"
+                    onClick={() => setShowTenantForm(true)}
+                  >
                     <Users className="h-6 w-6" />
                     <span>Novo Inquilino</span>
                   </Button>
@@ -200,6 +259,21 @@ const Dashboard = () => {
             </Card>
           </div>
         </main>
+
+        {showPropertyForm && (
+          <PropertyForm 
+            onClose={() => setShowPropertyForm(false)}
+            onSubmit={handlePropertySubmit}
+          />
+        )}
+
+        {showTenantForm && (
+          <TenantForm 
+            onClose={() => setShowTenantForm(false)}
+            onSubmit={handleTenantSubmit}
+            properties={properties}
+          />
+        )}
       </div>
     );
   }
