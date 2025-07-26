@@ -661,13 +661,14 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-6">
         {user?.role === "admin" && (
           <Tabs defaultValue="properties" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="properties">Propriedades</TabsTrigger>
               <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
               <TabsTrigger value="assignments">Designações</TabsTrigger>
               <TabsTrigger value="repairs">Reparos</TabsTrigger>
               <TabsTrigger value="payments">Pagamentos</TabsTrigger>
               <TabsTrigger value="settings">Configurações</TabsTrigger>
+              <TabsTrigger value="chat">Chat</TabsTrigger>
             </TabsList>
 
             <TabsContent value="properties">
@@ -803,6 +804,10 @@ const Dashboard = () => {
                 <MercadoPagoSettings adminId={user.id} />
                 <LateFeeSettings adminId={user.id} />
               </div>
+            </TabsContent>
+
+            <TabsContent value="chat">
+              <RealTimeChat currentUser={user} />
             </TabsContent>
           </Tabs>
         )}
