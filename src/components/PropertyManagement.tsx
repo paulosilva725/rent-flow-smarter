@@ -14,7 +14,8 @@ import {
   Trash2, 
   Edit3,
   FileText,
-  Upload
+  Upload,
+  Eye
 } from "lucide-react";
 
 interface Property {
@@ -65,6 +66,7 @@ export const PropertyManagement = ({
 }: PropertyManagementProps) => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<Map<string, File>>(new Map());
   const { toast } = useToast();
 
   const handleDeleteProperty = (id: string) => {
@@ -134,6 +136,9 @@ export const PropertyManagement = ({
         return;
       }
 
+      // Salvar o arquivo na memória para permitir visualização
+      setUploadedFiles(prev => new Map(prev.set(propertyId, file)));
+      
       onUploadContract(propertyId, file);
       toast({
         title: "Contrato salvo com sucesso!",
@@ -142,6 +147,25 @@ export const PropertyManagement = ({
       
       // Limpar o input para permitir upload do mesmo arquivo novamente se necessário
       event.target.value = '';
+    }
+  };
+
+  const handleOpenPDF = (propertyId: string, fileName: string) => {
+    const file = uploadedFiles.get(propertyId);
+    if (file) {
+      // Criar URL temporária para o arquivo
+      const fileURL = URL.createObjectURL(file);
+      // Abrir o PDF em uma nova aba
+      window.open(fileURL, '_blank');
+      
+      // Liberar a URL após um tempo para evitar vazamento de memória
+      setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+    } else {
+      toast({
+        title: "Arquivo não disponível",
+        description: "O arquivo PDF não está mais disponível na memória. Faça upload novamente.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -207,7 +231,20 @@ export const PropertyManagement = ({
                           {property.contractFile ? "Atualizar" : "Upload"}
                         </Button>
                         {property.contractFile && (
-                          <Badge variant="outline">PDF</Badge>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenPDF(property.id, property.contractFile!)}
+                              className="text-primary hover:text-primary-foreground"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Abrir PDF
+                            </Button>
+                            <Badge variant="outline" className="text-green-600 border-green-600">
+                              {property.contractFile}
+                            </Badge>
+                          </div>
                         )}
                       </div>
                     </TableCell>
