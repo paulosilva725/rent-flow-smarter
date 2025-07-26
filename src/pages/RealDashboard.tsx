@@ -269,21 +269,26 @@ const Dashboard = () => {
         return;
       }
 
-      // Aguardar um momento para o trigger criar o perfil
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Buscar o perfil criado automaticamente pelo trigger
-      const { data: profileData, error: profileFetchError } = await supabase
+      // Criar o perfil do inquilino diretamente
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
+        .insert({
+          user_id: authData.user.id,
+          name: data.name,
+          email: data.email,
+          role: 'tenant',
+          phone: data.phone,
+          cpf: data.document,
+          status: 'active'
+        })
         .select("id")
-        .eq("user_id", authData.user.id)
         .single();
 
-      if (profileFetchError || !profileData) {
-        console.error("Erro ao buscar perfil criado:", profileFetchError);
+      if (profileError) {
+        console.error("Erro ao criar perfil:", profileError);
         toast({
-          title: "Erro ao buscar perfil",
-          description: "O usuário foi criado mas houve erro ao buscar o perfil.",
+          title: "Erro ao criar perfil",
+          description: profileError.message,
           variant: "destructive",
         });
         return;
