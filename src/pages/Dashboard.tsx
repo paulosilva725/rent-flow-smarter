@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropertyForm } from "@/components/PropertyForm";
 import { TenantForm } from "@/components/TenantForm";
+import { PropertyManagement } from "@/components/PropertyManagement";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
@@ -14,35 +16,84 @@ import {
   Calendar,
   FileText,
   MessageSquare,
-  Settings
+  Settings,
+  BarChart3
 } from "lucide-react";
+
+interface Property {
+  id: string;
+  name: string;
+  rent: string;
+  address: string;
+  description?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  area?: string;
+  isOccupied: boolean;
+  tenantId?: string;
+  contractFile?: string;
+}
+
+interface Tenant {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  document?: string;
+  propertyId: string;
+  rentAmount?: string;
+  startDate?: string;
+  endDate?: string;
+  paymentStatus: 'paid' | 'pending' | 'overdue';
+}
 
 const Dashboard = () => {
   const [userType] = useState<"admin" | "tenant">("admin");
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showTenantForm, setShowTenantForm] = useState(false);
-  const [properties, setProperties] = useState([
-    { id: "1", name: "Apartamento 101", rent: "2500.00", address: "Rua A, 123" },
-    { id: "2", name: "Casa A", rent: "3200.00", address: "Rua B, 456" },
+  const [properties, setProperties] = useState<Property[]>([
+    { 
+      id: "1", 
+      name: "Apartamento 101", 
+      rent: "2500.00", 
+      address: "Rua A, 123",
+      isOccupied: true,
+      tenantId: "1",
+      contractFile: "contrato_apt101.pdf"
+    },
+    { 
+      id: "2", 
+      name: "Casa A", 
+      rent: "3200.00", 
+      address: "Rua B, 456",
+      isOccupied: false
+    },
   ]);
-  const [tenants, setTenants] = useState([
-    { id: "1", name: "João Silva", propertyId: "1", email: "joao@email.com" },
+  const [tenants, setTenants] = useState<Tenant[]>([
+    { 
+      id: "1", 
+      name: "João Silva", 
+      propertyId: "1", 
+      email: "joao@email.com",
+      rentAmount: "2500.00",
+      paymentStatus: "paid"
+    },
   ]);
   const { toast } = useToast();
 
   const stats = [
     {
       title: "Total de Imóveis",
-      value: "24",
+      value: properties.length.toString(),
       icon: Building2,
-      description: "2 novos este mês",
+      description: `${properties.filter(p => p.isOccupied).length} ocupados`,
       trend: "up"
     },
     {
       title: "Inquilinos Ativos",
-      value: "18",
+      value: tenants.length.toString(),
       icon: Users,
-      description: "85% de ocupação",
+      description: `${Math.round((properties.filter(p => p.isOccupied).length / properties.length) * 100)}% de ocupação`,
       trend: "up"
     },
     {
@@ -54,9 +105,9 @@ const Dashboard = () => {
     },
     {
       title: "Pendências",
-      value: "3",
+      value: tenants.filter(t => t.paymentStatus === 'overdue').length.toString(),
       icon: AlertTriangle,
-      description: "2 pagamentos atrasados",
+      description: `${tenants.filter(t => t.paymentStatus === 'pending').length} pagamentos pendentes`,
       trend: "down"
     }
   ];
@@ -74,7 +125,7 @@ const Dashboard = () => {
   ];
 
   const handlePropertySubmit = async (data: any) => {
-    const newProperty = {
+    const newProperty: Property = {
       id: Date.now().toString(),
       name: data.name,
       rent: data.rent,
@@ -83,6 +134,7 @@ const Dashboard = () => {
       bedrooms: data.bedrooms,
       bathrooms: data.bathrooms,
       area: data.area,
+      isOccupied: false,
     };
     
     setProperties(prev => [...prev, newProperty]);
@@ -93,7 +145,7 @@ const Dashboard = () => {
   };
 
   const handleTenantSubmit = async (data: any) => {
-    const newTenant = {
+    const newTenant: Tenant = {
       id: Date.now().toString(),
       name: data.name,
       email: data.email,
@@ -103,13 +155,51 @@ const Dashboard = () => {
       rentAmount: data.rentAmount,
       startDate: data.startDate,
       endDate: data.endDate,
+      paymentStatus: 'pending',
     };
+    
+    // Marcar imóvel como ocupado
+    setProperties(prev => prev.map(prop => 
+      prop.id === data.propertyId 
+        ? { ...prop, isOccupied: true, tenantId: newTenant.id }
+        : prop
+    ));
     
     setTenants(prev => [...prev, newTenant]);
     toast({
       title: "Inquilino cadastrado!",
       description: `${data.name} foi cadastrado com sucesso.`,
     });
+  };
+
+  const handleUpdateProperty = (updatedProperty: Property) => {
+    setProperties(prev => prev.map(prop => 
+      prop.id === updatedProperty.id ? updatedProperty : prop
+    ));
+  };
+
+  const handleDeleteProperty = (id: string) => {
+    setProperties(prev => prev.filter(prop => prop.id !== id));
+  };
+
+  const handleUpdateTenant = (updatedTenant: Tenant) => {
+    setTenants(prev => prev.map(tenant => 
+      tenant.id === updatedTenant.id ? updatedTenant : tenant
+    ));
+  };
+
+  const handleDeleteTenant = (id: string) => {
+    setTenants(prev => prev.filter(tenant => tenant.id !== id));
+  };
+
+  const handleUploadContract = (propertyId: string, file: File) => {
+    // Simular upload do arquivo
+    const fileName = file.name;
+    setProperties(prev => prev.map(prop => 
+      prop.id === propertyId 
+        ? { ...prop, contractFile: fileName }
+        : prop
+    ));
   };
 
   if (userType === "admin") {
@@ -140,124 +230,174 @@ const Dashboard = () => {
             <p className="text-muted-foreground">Visão geral do seu portfólio de imóveis</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            {stats.map((stat, index) => (
-              <Card key={index} className="shadow-card transition-smooth hover:shadow-elegant">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview" className="flex items-center space-x-2">
+                <BarChart3 className="h-4 w-4" />
+                <span>Visão Geral</span>
+              </TabsTrigger>
+              <TabsTrigger value="management" className="flex items-center space-x-2">
+                <Settings className="h-4 w-4" />
+                <span>Gerenciar</span>
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="flex items-center space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Relatórios</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-6">
+              {/* Stats Cards */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {stats.map((stat, index) => (
+                  <Card key={index} className="shadow-card transition-smooth hover:shadow-elegant">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                      <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stat.value}</div>
+                      <p className="text-xs text-muted-foreground">{stat.description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Recent Payments */}
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <DollarSign className="h-5 w-5 mr-2" />
+                      Pagamentos Recentes
+                    </CardTitle>
+                    <CardDescription>Últimos pagamentos recebidos</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentPayments.map((payment) => (
+                        <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div>
+                            <p className="font-medium">{payment.tenant}</p>
+                            <p className="text-sm text-muted-foreground">{payment.property}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{payment.amount}</p>
+                            <Badge 
+                              variant={
+                                payment.status === "paid" ? "default" : 
+                                payment.status === "pending" ? "secondary" : "destructive"
+                              }
+                              className="text-xs"
+                            >
+                              {payment.status === "paid" ? "Pago" : 
+                               payment.status === "pending" ? "Pendente" : "Atrasado"}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Upcoming Tasks */}
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Calendar className="h-5 w-5 mr-2" />
+                      Próximas Tarefas
+                    </CardTitle>
+                    <CardDescription>Atividades programadas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {upcomingTasks.map((task) => (
+                        <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border">
+                          <div>
+                            <p className="font-medium">{task.task}</p>
+                            <p className="text-sm text-muted-foreground">{task.date}</p>
+                          </div>
+                          <Badge 
+                            variant={
+                              task.priority === "high" ? "destructive" : 
+                              task.priority === "medium" ? "default" : "secondary"
+                            }
+                          >
+                            {task.priority === "high" ? "Alta" : 
+                             task.priority === "medium" ? "Média" : "Baixa"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Actions */}
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Ações Rápidas</CardTitle>
+                  <CardDescription>Operações frequentes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Button 
+                      className="h-20 flex-col space-y-2"
+                      onClick={() => setShowPropertyForm(true)}
+                    >
+                      <Building2 className="h-6 w-6" />
+                      <span>Novo Imóvel</span>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="h-20 flex-col space-y-2"
+                      onClick={() => setShowTenantForm(true)}
+                    >
+                      <Users className="h-6 w-6" />
+                      <span>Novo Inquilino</span>
+                    </Button>
+                    <Button variant="outline" className="h-20 flex-col space-y-2">
+                      <FileText className="h-6 w-6" />
+                      <span>Gerar Relatório</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </TabsContent>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Recent Payments */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <DollarSign className="h-5 w-5 mr-2" />
-                  Pagamentos Recentes
-                </CardTitle>
-                <CardDescription>Últimos pagamentos recebidos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentPayments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{payment.tenant}</p>
-                        <p className="text-sm text-muted-foreground">{payment.property}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{payment.amount}</p>
-                        <Badge 
-                          variant={
-                            payment.status === "paid" ? "default" : 
-                            payment.status === "pending" ? "secondary" : "destructive"
-                          }
-                          className="text-xs"
-                        >
-                          {payment.status === "paid" ? "Pago" : 
-                           payment.status === "pending" ? "Pendente" : "Atrasado"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <TabsContent value="management">
+              <PropertyManagement
+                properties={properties}
+                tenants={tenants}
+                onUpdateProperty={handleUpdateProperty}
+                onDeleteProperty={handleDeleteProperty}
+                onUpdateTenant={handleUpdateTenant}
+                onDeleteTenant={handleDeleteTenant}
+                onUploadContract={handleUploadContract}
+              />
+            </TabsContent>
 
-            {/* Upcoming Tasks */}
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Próximas Tarefas
-                </CardTitle>
-                <CardDescription>Atividades programadas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {upcomingTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium">{task.task}</p>
-                        <p className="text-sm text-muted-foreground">{task.date}</p>
-                      </div>
-                      <Badge 
-                        variant={
-                          task.priority === "high" ? "destructive" : 
-                          task.priority === "medium" ? "default" : "secondary"
-                        }
-                      >
-                        {task.priority === "high" ? "Alta" : 
-                         task.priority === "medium" ? "Média" : "Baixa"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mt-6">
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle>Ações Rápidas</CardTitle>
-                <CardDescription>Operações frequentes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Button 
-                    className="h-20 flex-col space-y-2"
-                    onClick={() => setShowPropertyForm(true)}
-                  >
-                    <Building2 className="h-6 w-6" />
-                    <span>Novo Imóvel</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="h-20 flex-col space-y-2"
-                    onClick={() => setShowTenantForm(true)}
-                  >
-                    <Users className="h-6 w-6" />
-                    <span>Novo Inquilino</span>
-                  </Button>
-                  <Button variant="outline" className="h-20 flex-col space-y-2">
-                    <FileText className="h-6 w-6" />
-                    <span>Gerar Relatório</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="reports">
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Relatórios</CardTitle>
+                  <CardDescription>Geração de relatórios financeiros e operacionais</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Button variant="outline" className="h-20 flex-col space-y-2">
+                      <FileText className="h-6 w-6" />
+                      <span>Relatório Financeiro</span>
+                    </Button>
+                    <Button variant="outline" className="h-20 flex-col space-y-2">
+                      <FileText className="h-6 w-6" />
+                      <span>Relatório de Ocupação</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </main>
 
         {showPropertyForm && (
@@ -271,7 +411,7 @@ const Dashboard = () => {
           <TenantForm 
             onClose={() => setShowTenantForm(false)}
             onSubmit={handleTenantSubmit}
-            properties={properties}
+            properties={properties.filter(p => !p.isOccupied)}
           />
         )}
       </div>
