@@ -9,6 +9,7 @@ import { LogOut, Settings, Home, Users, MessageSquare, CreditCard, FileText, Wre
 import RealTimeChat from "@/components/RealTimeChat";
 import PaymentArea from "@/components/PaymentArea";
 import MercadoPagoSettings from "@/components/MercadoPagoSettings";
+import { PropertyForm } from "@/components/PropertyForm";
 
 interface User {
   id: string;
@@ -53,6 +54,7 @@ const Dashboard = () => {
   const [userProperty, setUserProperty] = useState<Property | null>(null);
   const [repairRequests, setRepairRequests] = useState<RepairRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -140,7 +142,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/");
+    navigate("/auth");
   };
 
   const createRepairRequest = async (title: string, description: string, priority: string) => {
@@ -189,6 +191,35 @@ const Dashboard = () => {
         description: "O status da solicitação foi atualizado.",
       });
       fetchAdminData();
+    }
+  };
+
+  const handleCreateProperty = async (data: any) => {
+    const { error } = await supabase
+      .from("properties")
+      .insert({
+        name: data.name,
+        address: data.address,
+        rent_amount: parseFloat(data.rent),
+        description: data.description,
+        bedrooms: parseInt(data.bedrooms),
+        bathrooms: parseInt(data.bathrooms),
+        area: parseFloat(data.area),
+      });
+
+    if (error) {
+      toast({
+        title: "Erro ao criar propriedade",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Propriedade criada",
+        description: "A propriedade foi cadastrada com sucesso.",
+      });
+      fetchAdminData();
+      setShowPropertyForm(false);
     }
   };
 
@@ -311,8 +342,11 @@ const Dashboard = () => {
 
             <TabsContent value="properties">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Gerenciar Propriedades</CardTitle>
+                  <Button onClick={() => setShowPropertyForm(true)}>
+                    Cadastrar Propriedade
+                  </Button>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -557,6 +591,19 @@ const Dashboard = () => {
               <RealTimeChat currentUser={user} />
             </TabsContent>
           </Tabs>
+        )}
+
+        {/* Modal do formulário de propriedade */}
+        {showPropertyForm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-background rounded-lg p-6 w-full max-w-2xl">
+              <h2 className="text-xl font-bold mb-4">Cadastrar Nova Propriedade</h2>
+              <PropertyForm
+                onClose={() => setShowPropertyForm(false)}
+                onSubmit={handleCreateProperty}
+              />
+            </div>
+          </div>
         )}
       </div>
     </div>
