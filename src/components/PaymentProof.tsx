@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, Check, Clock, X, Eye, Edit, Download } from "lucide-react";
+import { Upload, FileText, Check, Clock, X, Eye, Edit, Download, ExternalLink } from "lucide-react";
 
 interface PaymentProof {
   id: string;
@@ -90,9 +90,15 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
   };
 
   const handleViewFile = (fileUrl: string, fileName: string) => {
+    // Open PDF in new tab
+    const url = `https://dxzmclybjohbfrcvizfg.supabase.co/storage/v1/object/public/payment_proofs/${fileUrl}`;
+    window.open(url, '_blank');
+  };
+
+  const handleDownloadFile = (fileUrl: string, fileName: string) => {
     // Create download link for PDF
     const link = document.createElement('a');
-    link.href = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/payment_proofs/${fileUrl}`;
+    link.href = `https://dxzmclybjohbfrcvizfg.supabase.co/storage/v1/object/public/payment_proofs/${fileUrl}`;
     link.download = fileName;
     link.target = '_blank';
     document.body.appendChild(link);
@@ -222,14 +228,24 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
                       <div className="flex items-center space-x-2">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{proof.fileName}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleViewFile(proof.fileUrl, proof.fileName)}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Baixar PDF
-                        </Button>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewFile(proof.fileUrl, proof.fileName)}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Abrir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadFile(proof.fileUrl, proof.fileName)}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Baixar
+                          </Button>
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">

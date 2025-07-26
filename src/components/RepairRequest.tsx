@@ -15,7 +15,8 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Calendar
+  Calendar,
+  Trash2
 } from "lucide-react";
 
 interface RepairRequest {
@@ -38,6 +39,7 @@ interface RepairRequestProps {
   requests: RepairRequest[];
   onCreateRequest: (request: Omit<RepairRequest, 'id' | 'requestDate'>) => void;
   onUpdateStatus: (requestId: string, status: RepairRequest['status']) => void;
+  onDeleteRequest?: (requestId: string) => void;
 }
 
 export const RepairRequest = ({ 
@@ -46,7 +48,8 @@ export const RepairRequest = ({
   currentPropertyId,
   requests,
   onCreateRequest,
-  onUpdateStatus
+  onUpdateStatus,
+  onDeleteRequest
 }: RepairRequestProps) => {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -134,6 +137,16 @@ export const RepairRequest = ({
       other: 'Outros'
     };
     return categories[category];
+  };
+
+  const handleDeleteRequest = (requestId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir esta solicitação de reparo?')) {
+      onDeleteRequest?.(requestId);
+      toast({
+        title: "Solicitação excluída",
+        description: "A solicitação de reparo foi excluída com sucesso."
+      });
+    }
   };
 
   // Filtrar solicitações baseado no tipo de usuário
@@ -291,21 +304,33 @@ export const RepairRequest = ({
                     </TableCell>
                     {userType === 'admin' && (
                       <TableCell>
-                        <Select
-                          value={request.status}
-                          onValueChange={(value: RepairRequest['status']) => 
-                            onUpdateStatus(request.id, value)
-                          }
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pendente</SelectItem>
-                            <SelectItem value="in-progress">Em Andamento</SelectItem>
-                            <SelectItem value="completed">Concluído</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex items-center space-x-2">
+                          <Select
+                            value={request.status}
+                            onValueChange={(value: RepairRequest['status']) => 
+                              onUpdateStatus(request.id, value)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pendente</SelectItem>
+                              <SelectItem value="in-progress">Em Andamento</SelectItem>
+                              <SelectItem value="completed">Concluído</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {request.status === 'completed' && onDeleteRequest && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDeleteRequest(request.id)}
+                              title="Excluir reparo concluído"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     )}
                   </TableRow>

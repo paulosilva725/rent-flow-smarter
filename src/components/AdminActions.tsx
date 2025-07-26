@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { ReportsSystem } from "./ReportsSystem";
 import { 
   Building2, 
   Users, 
@@ -40,6 +41,8 @@ interface Tenant {
 interface AdminActionsProps {
   properties: Property[];
   tenants: Tenant[];
+  payments?: any[];
+  repairRequests?: any[];
   onPropertyAction: (action: string, propertyId: string) => void;
   onTenantAction: (action: string, tenantId: string) => void;
   onBulkAction: (action: string, ids: string[]) => void;
@@ -47,7 +50,9 @@ interface AdminActionsProps {
 
 export const AdminActions = ({ 
   properties, 
-  tenants, 
+  tenants,
+  payments = [],
+  repairRequests = [],
   onPropertyAction,
   onTenantAction,
   onBulkAction 
@@ -389,51 +394,24 @@ export const AdminActions = ({
         </TabsContent>
 
         <TabsContent value="reports">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Relatórios Avançados</CardTitle>
-              <CardDescription>Gere relatórios detalhados para análise</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <FileText className="h-6 w-6" />
-                  <span>Relatório Financeiro</span>
-                  <span className="text-xs text-muted-foreground">Receitas e gastos</span>
-                </Button>
-                
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <TrendingUp className="h-6 w-6" />
-                  <span>Análise de Ocupação</span>
-                  <span className="text-xs text-muted-foreground">Taxa de ocupação</span>
-                </Button>
-                
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <Calendar className="h-6 w-6" />
-                  <span>Vencimentos</span>
-                  <span className="text-xs text-muted-foreground">Contratos e pagamentos</span>
-                </Button>
-                
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <Users className="h-6 w-6" />
-                  <span>Perfil Inquilinos</span>
-                  <span className="text-xs text-muted-foreground">Dados demográficos</span>
-                </Button>
-                
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <Building2 className="h-6 w-6" />
-                  <span>Performance Imóveis</span>
-                  <span className="text-xs text-muted-foreground">ROI por imóvel</span>
-                </Button>
-                
-                <Button variant="outline" className="h-24 flex-col space-y-2">
-                  <MessageSquare className="h-6 w-6" />
-                  <span>Comunicações</span>
-                  <span className="text-xs text-muted-foreground">Histórico de contatos</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ReportsSystem 
+            properties={properties.map(p => ({
+              id: p.id,
+              name: p.name,
+              address: p.address,
+              rent_amount: parseFloat(p.rent || '0'),
+              is_occupied: p.isOccupied,
+              tenant_id: p.tenantId
+            }))}
+            tenants={tenants.map(t => ({
+              id: t.id,
+              name: t.name,
+              email: t.email,
+              property_id: t.propertyId
+            }))}
+            payments={payments}
+            repairRequests={repairRequests}
+          />
         </TabsContent>
       </Tabs>
     </div>
