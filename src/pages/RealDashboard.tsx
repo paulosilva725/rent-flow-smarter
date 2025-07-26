@@ -17,6 +17,7 @@ import { PaymentProof } from "@/components/PaymentProof";
 import { RepairRequest } from "@/components/RepairRequest";
 import LateFeeSettings from "@/components/LateFeeSettings";
 import LateFeeView from "@/components/LateFeeView";
+import { ReportsSystem } from "@/components/ReportsSystem";
 
 interface User {
   id: string;
@@ -661,13 +662,14 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-6">
         {user?.role === "admin" && (
           <Tabs defaultValue="properties" className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="properties">Propriedades</TabsTrigger>
               <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
               <TabsTrigger value="assignments">Designações</TabsTrigger>
               <TabsTrigger value="repairs">Reparos</TabsTrigger>
               <TabsTrigger value="payments">Pagamentos</TabsTrigger>
               <TabsTrigger value="settings">Configurações</TabsTrigger>
+              <TabsTrigger value="reports">Relatórios</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
             </TabsList>
 
@@ -804,6 +806,44 @@ const Dashboard = () => {
                 <MercadoPagoSettings adminId={user.id} />
                 <LateFeeSettings adminId={user.id} />
               </div>
+            </TabsContent>
+
+            <TabsContent value="reports">
+              <ReportsSystem 
+                properties={properties.map(p => ({
+                  id: p.id,
+                  name: p.name,
+                  address: p.address,
+                  rent_amount: p.rent_amount,
+                  is_occupied: p.is_occupied,
+                  tenant_id: p.tenant_id || undefined
+                }))}
+                tenants={tenants.map(t => ({
+                  id: t.id,
+                  name: t.name,
+                  email: t.email,
+                  property_id: properties.find(p => p.tenant_id === t.id)?.id
+                }))}
+                payments={paymentProofs.map(proof => ({
+                  id: proof.id,
+                  amount: proof.amount,
+                  status: proof.status,
+                  reference_month: proof.reference_month,
+                  tenant_id: proof.tenant_id,
+                  property_id: proof.property_id
+                }))}
+                repairRequests={repairRequests.map(req => ({
+                  id: req.id,
+                  title: req.title,
+                  description: req.description,
+                  category: 'other' as const,
+                  priority: req.priority,
+                  status: req.status,
+                  requestDate: new Date(req.created_at).toLocaleDateString(),
+                  tenantId: req.tenant_id || '',
+                  propertyId: req.property_id || ''
+                }))}
+              />
             </TabsContent>
 
             <TabsContent value="chat">
