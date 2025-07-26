@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: Building2,
@@ -99,10 +101,10 @@ const Index = () => {
             <h1 className="text-2xl font-bold">RentManager Pro</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => window.location.href = '/login'}>
+            <Button variant="ghost" onClick={() => navigate('/auth')}>
               Entrar
             </Button>
-            <Button onClick={() => window.location.href = '/login'}>
+            <Button onClick={() => navigate('/auth')}>
               Começar Grátis
             </Button>
           </div>
