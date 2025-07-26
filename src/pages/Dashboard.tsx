@@ -1,0 +1,266 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Building2, 
+  Users, 
+  DollarSign, 
+  AlertTriangle,
+  TrendingUp,
+  Calendar,
+  FileText,
+  MessageSquare,
+  Settings
+} from "lucide-react";
+
+const Dashboard = () => {
+  const [userType] = useState<"admin" | "tenant">("admin");
+
+  const stats = [
+    {
+      title: "Total de Imóveis",
+      value: "24",
+      icon: Building2,
+      description: "2 novos este mês",
+      trend: "up"
+    },
+    {
+      title: "Inquilinos Ativos",
+      value: "18",
+      icon: Users,
+      description: "85% de ocupação",
+      trend: "up"
+    },
+    {
+      title: "Receita Mensal",
+      value: "R$ 45.000",
+      icon: DollarSign,
+      description: "+12% vs mês anterior",
+      trend: "up"
+    },
+    {
+      title: "Pendências",
+      value: "3",
+      icon: AlertTriangle,
+      description: "2 pagamentos atrasados",
+      trend: "down"
+    }
+  ];
+
+  const recentPayments = [
+    { id: 1, tenant: "João Silva", property: "Apt 101", amount: "R$ 2.500", status: "paid", date: "15/01/2024" },
+    { id: 2, tenant: "Maria Santos", property: "Casa A", amount: "R$ 3.200", status: "pending", date: "10/01/2024" },
+    { id: 3, tenant: "Pedro Costa", property: "Apt 205", amount: "R$ 1.800", status: "overdue", date: "05/01/2024" },
+  ];
+
+  const upcomingTasks = [
+    { id: 1, task: "Vistoria - Apt 101", date: "20/01/2024", priority: "high" },
+    { id: 2, task: "Renovação contrato - Maria Santos", date: "22/01/2024", priority: "medium" },
+    { id: 3, task: "Manutenção - Casa B", date: "25/01/2024", priority: "low" },
+  ];
+
+  if (userType === "admin") {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <header className="border-b bg-background shadow-card">
+          <div className="flex h-16 items-center px-6">
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-bold">RentManager Pro</h1>
+            </div>
+            <div className="ml-auto flex items-center space-x-4">
+              <Button variant="outline" size="sm">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Mensagens
+              </Button>
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurações
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Dashboard do Administrador</h2>
+            <p className="text-muted-foreground">Visão geral do seu portfólio de imóveis</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+            {stats.map((stat, index) => (
+              <Card key={index} className="shadow-card transition-smooth hover:shadow-elegant">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Recent Payments */}
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Pagamentos Recentes
+                </CardTitle>
+                <CardDescription>Últimos pagamentos recebidos</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentPayments.map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div>
+                        <p className="font-medium">{payment.tenant}</p>
+                        <p className="text-sm text-muted-foreground">{payment.property}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{payment.amount}</p>
+                        <Badge 
+                          variant={
+                            payment.status === "paid" ? "default" : 
+                            payment.status === "pending" ? "secondary" : "destructive"
+                          }
+                          className="text-xs"
+                        >
+                          {payment.status === "paid" ? "Pago" : 
+                           payment.status === "pending" ? "Pendente" : "Atrasado"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Tasks */}
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Próximas Tarefas
+                </CardTitle>
+                <CardDescription>Atividades programadas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {upcomingTasks.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border">
+                      <div>
+                        <p className="font-medium">{task.task}</p>
+                        <p className="text-sm text-muted-foreground">{task.date}</p>
+                      </div>
+                      <Badge 
+                        variant={
+                          task.priority === "high" ? "destructive" : 
+                          task.priority === "medium" ? "default" : "secondary"
+                        }
+                      >
+                        {task.priority === "high" ? "Alta" : 
+                         task.priority === "medium" ? "Média" : "Baixa"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-6">
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle>Ações Rápidas</CardTitle>
+                <CardDescription>Operações frequentes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Button className="h-20 flex-col space-y-2">
+                    <Building2 className="h-6 w-6" />
+                    <span>Novo Imóvel</span>
+                  </Button>
+                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                    <Users className="h-6 w-6" />
+                    <span>Novo Inquilino</span>
+                  </Button>
+                  <Button variant="outline" className="h-20 flex-col space-y-2">
+                    <FileText className="h-6 w-6" />
+                    <span>Gerar Relatório</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Tenant Dashboard (simplified version)
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <header className="border-b bg-background shadow-card">
+        <div className="flex h-16 items-center px-6">
+          <div className="flex items-center space-x-2">
+            <Building2 className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold">Portal do Inquilino</h1>
+          </div>
+        </div>
+      </header>
+
+      <main className="p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-2">Bem-vindo, João!</h2>
+          <p className="text-muted-foreground">Apartamento 101 - Edifício Central</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Próximo Pagamento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center">
+                <p className="text-3xl font-bold text-primary">R$ 2.500</p>
+                <p className="text-muted-foreground">Vencimento: 05/02/2024</p>
+                <Button className="mt-4 w-full">Pagar Agora</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Histórico de Pagamentos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Janeiro 2024</span>
+                  <Badge>Pago</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span>Dezembro 2023</span>
+                  <Badge>Pago</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span>Novembro 2023</span>
+                  <Badge>Pago</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
