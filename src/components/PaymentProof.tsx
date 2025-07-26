@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileText, Check, Clock, X, Eye, Edit, Download, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentProof {
   id: string;
@@ -89,21 +90,48 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
     });
   };
 
-  const handleViewFile = (fileUrl: string, fileName: string) => {
-    // Open PDF in new tab
-    const url = `https://dxzmclybjohbfrcvizfg.supabase.co/storage/v1/object/public/payment_proofs/${fileUrl}`;
-    window.open(url, '_blank');
+  const handleViewFile = async (fileUrl: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('payment_proofs')
+        .createSignedUrl(fileUrl, 3600); // URL válida por 1 hora
+      
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao abrir arquivo",
+        description: "Não foi possível abrir o arquivo.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDownloadFile = (fileUrl: string, fileName: string) => {
-    // Create download link for PDF
-    const link = document.createElement('a');
-    link.href = `https://dxzmclybjohbfrcvizfg.supabase.co/storage/v1/object/public/payment_proofs/${fileUrl}`;
-    link.download = fileName;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadFile = async (fileUrl: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('payment_proofs')
+        .createSignedUrl(fileUrl, 3600);
+      
+      if (error) throw error;
+      if (data?.signedUrl) {
+        const link = document.createElement('a');
+        link.href = data.signedUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao baixar arquivo",
+        description: "Não foi possível baixar o arquivo.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusColor = (status: PaymentProof['status']) => {
