@@ -89,7 +89,7 @@ interface ChatMessage {
 
 const Dashboard = () => {
   // Simular usuário logado - em produção seria baseado na autenticação real
-  const [userType] = useState<"admin" | "tenant">("tenant"); // Mudando para tenant para demonstrar
+  const [userType] = useState<"admin" | "tenant">("admin"); // Admin para demonstrar funcionalidades
   const [currentUserId] = useState("1"); // ID do usuário atual
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showTenantForm, setShowTenantForm] = useState(false);
@@ -404,7 +404,7 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <BarChart3 className="h-4 w-4" />
                 <span>Visão Geral</span>
@@ -413,9 +413,32 @@ const Dashboard = () => {
                 <Settings className="h-4 w-4" />
                 <span>Gerenciar</span>
               </TabsTrigger>
-              <TabsTrigger value="repairs" className="flex items-center space-x-2">
+              <TabsTrigger value="repairs" className="flex items-center space-x-2 relative">
                 <Wrench className="h-4 w-4" />
                 <span>Reparos</span>
+                {repairRequests.filter(r => r.status === 'pending').length > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                    {repairRequests.filter(r => r.status === 'pending').length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="flex items-center space-x-2 relative">
+                <DollarSign className="h-4 w-4" />
+                <span>Comprovantes</span>
+                {paymentProofs.filter(p => p.status === 'pending').length > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                    {paymentProofs.filter(p => p.status === 'pending').length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex items-center space-x-2 relative">
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat</span>
+                {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs">
+                    {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="actions" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
@@ -560,6 +583,26 @@ const Dashboard = () => {
                 requests={repairRequests}
                 onCreateRequest={handleCreateRepairRequest}
                 onUpdateStatus={handleUpdateRepairStatus}
+              />
+            </TabsContent>
+
+            <TabsContent value="payments">
+              <PaymentProof
+                userType="admin"
+                proofs={paymentProofs}
+                onUploadProof={handleUploadPaymentProof}
+                onUpdateProofStatus={handleUpdateProofStatus}
+              />
+            </TabsContent>
+
+            <TabsContent value="chat">
+              <InternalChat
+                userType="admin"
+                currentUserId="admin"
+                currentUserName="Administrador"
+                messages={chatMessages}
+                onSendMessage={handleSendMessage}
+                onMarkAsRead={handleMarkAsRead}
               />
             </TabsContent>
 
