@@ -17,6 +17,8 @@ const propertySchema = z.object({
   bedrooms: z.string().min(1, "Número de quartos é obrigatório"),
   bathrooms: z.string().min(1, "Número de banheiros é obrigatório"),
   area: z.string().min(1, "Área é obrigatória"),
+  contractStartDate: z.string().optional(),
+  contractEndDate: z.string().optional(),
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
@@ -41,6 +43,8 @@ export const PropertyForm = ({ onClose, onSubmit, initialData, isEditing = false
       bedrooms: initialData?.bedrooms || "",
       bathrooms: initialData?.bathrooms || "",
       area: initialData?.area || "",
+      contractStartDate: initialData?.contractStartDate || "",
+      contractEndDate: initialData?.contractEndDate || "",
     },
   });
 
@@ -177,6 +181,36 @@ export const PropertyForm = ({ onClose, onSubmit, initialData, isEditing = false
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="contractStartDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data Início do Contrato</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contractEndDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Data Fim do Contrato</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="flex gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={onClose} className="flex-1">

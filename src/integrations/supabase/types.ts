@@ -94,6 +94,42 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          contract_end_date: string
+          contract_start_date: string
+          created_at: string
+          file_name: string
+          file_url: string
+          id: string
+          property_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          contract_end_date: string
+          contract_start_date: string
+          created_at?: string
+          file_name: string
+          file_url: string
+          id?: string
+          property_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          contract_end_date?: string
+          contract_start_date?: string
+          created_at?: string
+          file_name?: string
+          file_url?: string
+          id?: string
+          property_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_proofs: {
         Row: {
           amount: number
@@ -217,6 +253,7 @@ export type Database = {
           name: string
           phone: string | null
           role: string
+          status: string | null
           updated_at: string
           user_id: string | null
         }
@@ -228,6 +265,7 @@ export type Database = {
           name: string
           phone?: string | null
           role: string
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -239,6 +277,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -250,7 +289,9 @@ export type Database = {
           area: number | null
           bathrooms: number | null
           bedrooms: number | null
+          contract_end_date: string | null
           contract_file_url: string | null
+          contract_start_date: string | null
           created_at: string
           description: string | null
           id: string
@@ -265,7 +306,9 @@ export type Database = {
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          contract_end_date?: string | null
           contract_file_url?: string | null
+          contract_start_date?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -280,7 +323,9 @@ export type Database = {
           area?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          contract_end_date?: string | null
           contract_file_url?: string | null
+          contract_start_date?: string | null
           created_at?: string
           description?: string | null
           id?: string
