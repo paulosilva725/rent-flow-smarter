@@ -414,13 +414,14 @@ const Dashboard = () => {
     }
   };
 
-  const updatePaymentProofStatus = async (proofId: string, status: string, rejectionReason?: string) => {
+  const updatePaymentProofStatus = async (proofId: string, status: string, rejectionReason?: string, observation?: string) => {
     try {
       const { error } = await supabase
         .from('payment_proofs')
         .update({ 
           status,
-          rejection_reason: rejectionReason || null
+          rejection_reason: rejectionReason || null,
+          observation: observation || null
         })
         .eq('id', proofId);
 
@@ -777,7 +778,17 @@ const Dashboard = () => {
               <div className="space-y-6">
                 <PaymentProof
                   userType="admin"
-                  proofs={paymentProofs}
+                  proofs={paymentProofs.map(proof => ({
+                    id: proof.id,
+                    fileName: proof.file_name,
+                    fileUrl: proof.file_url,
+                    uploadDate: proof.created_at,
+                    status: proof.status,
+                    monthReference: proof.reference_month,
+                    amount: proof.amount.toString(),
+                    rejectionReason: proof.rejection_reason,
+                    observation: proof.observation
+                  }))}
                   onUploadProof={handleUploadPaymentProof}
                   onUpdateProofStatus={updatePaymentProofStatus}
                 />
@@ -883,7 +894,17 @@ const Dashboard = () => {
               <div className="space-y-6">
                 <PaymentProof
                   userType="tenant"
-                  proofs={paymentProofs}
+                  proofs={paymentProofs.map(proof => ({
+                    id: proof.id,
+                    fileName: proof.file_name,
+                    fileUrl: proof.file_url,
+                    uploadDate: proof.created_at,
+                    status: proof.status,
+                    monthReference: proof.reference_month,
+                    amount: proof.amount.toString(),
+                    rejectionReason: proof.rejection_reason,
+                    observation: proof.observation
+                  }))}
                   onUploadProof={handleUploadPaymentProof}
                   onUpdateProofStatus={updatePaymentProofStatus}
                 />

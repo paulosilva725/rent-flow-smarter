@@ -69,11 +69,13 @@ interface RepairRequest {
 interface PaymentProof {
   id: string;
   fileName: string;
+  fileUrl?: string;
   uploadDate: string;
   status: 'pending' | 'approved' | 'rejected';
   monthReference: string;
   amount: string;
   rejectionReason?: string;
+  observation?: string;
   tenantId: string;
 }
 
@@ -659,7 +661,17 @@ const Dashboard = () => {
                 
                 <PaymentProof
                   userType="admin"
-                  proofs={paymentProofs}
+                  proofs={paymentProofs.map(proof => ({
+                    id: proof.id,
+                    fileName: proof.fileName,
+                    fileUrl: proof.fileUrl || '',
+                    uploadDate: proof.uploadDate,
+                    status: proof.status,
+                    monthReference: proof.monthReference,
+                    amount: proof.amount,
+                    rejectionReason: proof.rejectionReason,
+                    observation: proof.observation
+                  }))}
                   onUploadProof={handleUploadPaymentProof}
                   onUpdateProofStatus={handleUpdateProofStatus}
                 />
@@ -944,7 +956,17 @@ const Dashboard = () => {
           <TabsContent value="proof">
             <PaymentProof
               userType="tenant"
-              proofs={paymentProofs.filter(proof => proof.tenantId === currentUserId)}
+              proofs={paymentProofs.filter(proof => proof.tenantId === currentUserId).map(proof => ({
+                id: proof.id,
+                fileName: proof.fileName,
+                fileUrl: proof.fileUrl || '',
+                uploadDate: proof.uploadDate,
+                status: proof.status,
+                monthReference: proof.monthReference,
+                amount: proof.amount,
+                rejectionReason: proof.rejectionReason,
+                observation: proof.observation
+              }))}
               onUploadProof={handleUploadPaymentProof}
               onUpdateProofStatus={handleUpdateProofStatus}
             />

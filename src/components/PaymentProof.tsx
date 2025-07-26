@@ -2,30 +2,37 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, FileText, Check, Clock, X } from "lucide-react";
+import { Upload, FileText, Check, Clock, X, Eye, Edit, Download } from "lucide-react";
 
 interface PaymentProof {
   id: string;
   fileName: string;
+  fileUrl: string;
   uploadDate: string;
   status: 'pending' | 'approved' | 'rejected';
   monthReference: string;
   amount: string;
   rejectionReason?: string;
+  observation?: string;
 }
 
 interface PaymentProofProps {
   userType: "admin" | "tenant";
   proofs: PaymentProof[];
   onUploadProof?: (file: File, monthReference: string, amount: string) => void;
-  onUpdateProofStatus?: (proofId: string, status: PaymentProof['status'], reason?: string) => void;
+  onUpdateProofStatus?: (proofId: string, status: PaymentProof['status'], reason?: string, observation?: string) => void;
 }
 
 export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofStatus }: PaymentProofProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [monthReference, setMonthReference] = useState("");
   const [amount, setAmount] = useState("");
+  const [editingProof, setEditingProof] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState<PaymentProof['status']>('pending');
+  const [editObservation, setEditObservation] = useState("");
   const { toast } = useToast();
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,6 +75,22 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
       title: "Status atualizado",
       description: `Comprovante ${status === 'approved' ? 'aprovado' : status === 'rejected' ? 'rejeitado' : 'em análise'}.`
     });
+  };
+
+  const handleManualStatusUpdate = (proofId: string) => {
+    onUpdateProofStatus?.(proofId, editStatus, "", editObservation);
+    setEditingProof(null);
+    setEditStatus('pending');
+    setEditObservation("");
+    
+    toast({
+      title: "Status atualizado",
+      description: `Status alterado para ${getStatusText(editStatus)}.`
+    });
+  };
+
+  const handleViewFile = (fileUrl: string) => {
+    window.open(fileUrl, '_blank');
   };
 
   const getStatusColor = (status: PaymentProof['status']) => {
@@ -186,46 +209,124 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
               </p>
             ) : (
               proofs.map((proof) => (
-                <div key={proof.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{proof.fileName}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>Referência: {new Date(proof.monthReference).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</p>
-                      <p>Valor: R$ {proof.amount}</p>
-                      <p>Enviado em: {proof.uploadDate}</p>
-                      {proof.status === 'rejected' && proof.rejectionReason && (
-                        <p className="text-destructive">Motivo: {proof.rejectionReason}</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Badge variant={getStatusColor(proof.status)} className="flex items-center space-x-1">
-                      {getStatusIcon(proof.status)}
-                      <span>{getStatusText(proof.status)}</span>
-                    </Badge>
-                    
-                    {userType === "admin" && proof.status === 'pending' && (
-                      <div className="flex space-x-2">
+                <div key={proof.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{proof.fileName}</span>
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(proof.id, 'approved')}
+                          variant="outline"
+                          onClick={() => handleViewFile(proof.fileUrl)}
                         >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleStatusUpdate(proof.id, 'rejected')}
-                        >
-                          <X className="h-4 w-4" />
+                          <Eye className="h-4 w-4 mr-1" />
+                          Ver PDF
                         </Button>
                       </div>
-                    )}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                        <p><strong>Mês de Vencimento:</strong> {new Date(proof.monthReference).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</p>
+                        <p><strong>Valor:</strong> R$ {Number(proof.amount).toFixed(2)}</p>
+                        <p><strong>Enviado em:</strong> {new Date(proof.uploadDate).toLocaleDateString('pt-BR')}</p>
+                      </div>
+
+                      {proof.observation && (
+                        <div className="bg-muted p-2 rounded text-sm">
+                          <strong>Observação:</strong> {proof.observation}
+                        </div>
+                      )}
+
+                      {proof.status === 'rejected' && proof.rejectionReason && (
+                        <div className="bg-destructive/10 p-2 rounded text-sm text-destructive">
+                          <strong>Motivo da rejeição:</strong> {proof.rejectionReason}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={getStatusColor(proof.status)} className="flex items-center space-x-1">
+                        {getStatusIcon(proof.status)}
+                        <span>{getStatusText(proof.status)}</span>
+                      </Badge>
+                    </div>
                   </div>
+
+                  {userType === "admin" && (
+                    <div className="border-t pt-4 space-y-3">
+                      {editingProof === proof.id ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Alterar Status</label>
+                              <Select value={editStatus} onValueChange={(value) => setEditStatus(value as PaymentProof['status'])}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Em Análise</SelectItem>
+                                  <SelectItem value="approved">Aprovado</SelectItem>
+                                  <SelectItem value="rejected">Rejeitado</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Observação</label>
+                              <Textarea
+                                placeholder="Adicione uma observação..."
+                                value={editObservation}
+                                onChange={(e) => setEditObservation(e.target.value)}
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button size="sm" onClick={() => handleManualStatusUpdate(proof.id)}>
+                              <Check className="h-4 w-4 mr-1" />
+                              Salvar
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingProof(null)}>
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex space-x-2">
+                          {proof.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleStatusUpdate(proof.id, 'approved')}
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Aprovar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleStatusUpdate(proof.id, 'rejected')}
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Rejeitar
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingProof(proof.id);
+                              setEditStatus(proof.status);
+                              setEditObservation(proof.observation || "");
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Editar Status
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))
             )}
