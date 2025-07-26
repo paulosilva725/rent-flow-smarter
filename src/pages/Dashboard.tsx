@@ -8,6 +8,8 @@ import { TenantForm } from "@/components/TenantForm";
 import { PropertyManagement } from "@/components/PropertyManagement";
 import { RepairRequest } from "@/components/RepairRequest";
 import { AdminActions } from "@/components/AdminActions";
+import { PaymentProof } from "@/components/PaymentProof";
+import { InternalChat } from "@/components/InternalChat";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
@@ -64,6 +66,27 @@ interface RepairRequest {
   propertyId: string;
 }
 
+interface PaymentProof {
+  id: string;
+  fileName: string;
+  uploadDate: string;
+  status: 'pending' | 'approved' | 'rejected';
+  monthReference: string;
+  amount: string;
+  rejectionReason?: string;
+  tenantId: string;
+}
+
+interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderType: 'admin' | 'tenant';
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
 const Dashboard = () => {
   // Simular usuário logado - em produção seria baseado na autenticação real
   const [userType] = useState<"admin" | "tenant">("tenant"); // Mudando para tenant para demonstrar
@@ -109,6 +132,37 @@ const Dashboard = () => {
       requestDate: "15/01/2024",
       tenantId: "1",
       propertyId: "1"
+    }
+  ]);
+  const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>([
+    {
+      id: "1",
+      fileName: "comprovante_janeiro_2024.pdf",
+      uploadDate: "15/01/2024",
+      status: "approved",
+      monthReference: "2024-01",
+      amount: "2500.00",
+      tenantId: "1"
+    }
+  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      id: "1",
+      senderId: "admin",
+      senderName: "Administrador",
+      senderType: "admin",
+      message: "Olá João! Bem-vindo ao portal. Se precisar de alguma coisa, estarei aqui para ajudar.",
+      timestamp: new Date(Date.now() - 86400000).toISOString(),
+      isRead: true
+    },
+    {
+      id: "2",
+      senderId: "1",
+      senderName: "João Silva",
+      senderType: "tenant",
+      message: "Obrigado! Tenho uma dúvida sobre o vencimento do próximo aluguel.",
+      timestamp: new Date(Date.now() - 43200000).toISOString(),
+      isRead: true
     }
   ]);
   const { toast } = useToast();
@@ -279,6 +333,46 @@ const Dashboard = () => {
       title: "Ação em massa executada",
       description: `Ação "${action}" executada em ${ids.length} item(s).`
     });
+  };
+
+  const handleUploadPaymentProof = (file: File, monthReference: string, amount: string) => {
+    const newProof: PaymentProof = {
+      id: Date.now().toString(),
+      fileName: file.name,
+      uploadDate: new Date().toLocaleDateString('pt-BR'),
+      status: 'pending',
+      monthReference,
+      amount,
+      tenantId: currentUserId
+    };
+    setPaymentProofs(prev => [...prev, newProof]);
+  };
+
+  const handleUpdateProofStatus = (proofId: string, status: PaymentProof['status'], reason?: string) => {
+    setPaymentProofs(prev => prev.map(proof => 
+      proof.id === proofId 
+        ? { ...proof, status, rejectionReason: reason }
+        : proof
+    ));
+  };
+
+  const handleSendMessage = (message: string) => {
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      senderId: currentUserId,
+      senderName: userType === 'admin' ? 'Administrador' : currentTenant?.name || 'Inquilino',
+      senderType: userType,
+      message,
+      timestamp: new Date().toISOString(),
+      isRead: false
+    };
+    setChatMessages(prev => [...prev, newMessage]);
+  };
+
+  const handleMarkAsRead = (messageId: string) => {
+    setChatMessages(prev => prev.map(msg => 
+      msg.id === messageId ? { ...msg, isRead: true } : msg
+    ));
   };
 
   if (userType === "admin") {
@@ -559,7 +653,7 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="payment" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="payment" className="flex items-center space-x-2">
               <DollarSign className="h-4 w-4" />
               <span>Pagamentos</span>
@@ -567,6 +661,14 @@ const Dashboard = () => {
             <TabsTrigger value="repairs" className="flex items-center space-x-2">
               <Wrench className="h-4 w-4" />
               <span>Reparos</span>
+            </TabsTrigger>
+            <TabsTrigger value="proof" className="flex items-center space-x-2">
+              <FileText className="h-4 w-4" />
+              <span>Comprovantes</span>
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="flex items-center space-x-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>Chat</span>
             </TabsTrigger>
           </TabsList>
 
@@ -636,6 +738,26 @@ const Dashboard = () => {
               requests={tenantRepairRequests}
               onCreateRequest={handleCreateRepairRequest}
               onUpdateStatus={handleUpdateRepairStatus}
+            />
+          </TabsContent>
+
+          <TabsContent value="proof">
+            <PaymentProof
+              userType="tenant"
+              proofs={paymentProofs.filter(proof => proof.tenantId === currentUserId)}
+              onUploadProof={handleUploadPaymentProof}
+              onUpdateProofStatus={handleUpdateProofStatus}
+            />
+          </TabsContent>
+
+          <TabsContent value="chat">
+            <InternalChat
+              userType="tenant"
+              currentUserId={currentUserId}
+              currentUserName={currentTenant?.name || 'Inquilino'}
+              messages={chatMessages}
+              onSendMessage={handleSendMessage}
+              onMarkAsRead={handleMarkAsRead}
             />
           </TabsContent>
         </Tabs>
