@@ -89,8 +89,8 @@ interface ChatMessage {
 
 const Dashboard = () => {
   // Simular usuário logado - em produção seria baseado na autenticação real
-  const [userType] = useState<"admin" | "tenant">("admin"); // Admin para demonstrar funcionalidades
-  const [currentUserId] = useState("1"); // ID do usuário atual
+  const [userType, setUserType] = useState<"admin" | "tenant">("tenant"); // Mudando para tenant para testar
+  const [currentUserId] = useState(userType === "admin" ? "admin" : "1"); // ID diferente para admin
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showTenantForm, setShowTenantForm] = useState(false);
   const [properties, setProperties] = useState<Property[]>([
@@ -358,9 +358,16 @@ const Dashboard = () => {
       status: 'pending',
       monthReference,
       amount,
-      tenantId: currentUserId
+      tenantId: userType === "tenant" ? currentUserId : "1" // Usar ID correto do tenant
     };
     setPaymentProofs(prev => [...prev, newProof]);
+    
+    toast({
+      title: "Comprovante enviado!",
+      description: userType === "tenant" 
+        ? "Seu comprovante foi enviado para análise do administrador."
+        : "Comprovante adicionado ao sistema."
+    });
   };
 
   const handleUpdateProofStatus = (proofId: string, status: PaymentProof['status'], reason?: string) => {
@@ -415,6 +422,14 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="ml-auto flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setUserType(userType === "admin" ? "tenant" : "admin")}
+                className="shadow-sm hover:shadow-md transition-smooth"
+              >
+                Alternar para {userType === "admin" ? "Inquilino" : "Admin"}
+              </Button>
               <Button variant="outline" size="sm" className="shadow-sm hover:shadow-md transition-smooth">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Mensagens
@@ -735,6 +750,15 @@ const Dashboard = () => {
           <div className="flex items-center space-x-2">
             <Home className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">Portal do Inquilino</h1>
+          </div>
+          <div className="ml-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setUserType("admin")}
+            >
+              Ir para Admin
+            </Button>
           </div>
         </div>
       </header>
