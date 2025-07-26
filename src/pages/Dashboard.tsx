@@ -65,7 +65,9 @@ interface RepairRequest {
 }
 
 const Dashboard = () => {
-  const [userType] = useState<"admin" | "tenant">("admin");
+  // Simular usuário logado - em produção seria baseado na autenticação real
+  const [userType] = useState<"admin" | "tenant">("tenant"); // Mudando para tenant para demonstrar
+  const [currentUserId] = useState("1"); // ID do usuário atual
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showTenantForm, setShowTenantForm] = useState(false);
   const [properties, setProperties] = useState<Property[]>([
@@ -497,8 +499,17 @@ const Dashboard = () => {
     );
   }
 
-  // Tenant Dashboard (simplified version)
-  const currentTenant = tenants.find(t => t.id === "1"); // Simulating logged in tenant
+  // Área do Inquilino - apenas informações do imóvel que está alugando
+  const currentTenant = tenants.find(t => t.id === currentUserId);
+  const currentProperty = properties.find(p => p.id === currentTenant?.propertyId);
+  const tenantRepairRequests = repairRequests.filter(r => r.tenantId === currentUserId);
+
+  const handleRequestBoleto = () => {
+    toast({
+      title: "Boleto solicitado!",
+      description: "Seu boleto será enviado por email em até 24 horas.",
+    });
+  };
   
   return (
     <div className="min-h-screen bg-muted/30">
@@ -513,9 +524,39 @@ const Dashboard = () => {
 
       <main className="p-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Bem-vindo, João!</h2>
-          <p className="text-muted-foreground">Apartamento 101 - Edifício Central</p>
+          <h2 className="text-2xl font-bold mb-2">Bem-vindo, {currentTenant?.name}!</h2>
+          <p className="text-muted-foreground">{currentProperty?.name} - {currentProperty?.address}</p>
         </div>
+
+        {/* Informações do Imóvel */}
+        <Card className="shadow-card mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Building2 className="h-5 w-5 mr-2" />
+              Informações do Imóvel
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Endereço</p>
+                <p className="font-medium">{currentProperty?.address}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Aluguel</p>
+                <p className="font-medium">R$ {currentProperty?.rent}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Quartos</p>
+                <p className="font-medium">{currentProperty?.bedrooms || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Banheiros</p>
+                <p className="font-medium">{currentProperty?.bathrooms || 'N/A'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="payment" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
@@ -537,9 +578,28 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-center">
-                    <p className="text-3xl font-bold text-primary">R$ 2.500</p>
+                    <p className="text-3xl font-bold text-primary">R$ {currentTenant?.rentAmount}</p>
                     <p className="text-muted-foreground">Vencimento: 05/02/2024</p>
-                    <Button className="mt-4 w-full">Pagar Agora</Button>
+                    <Badge 
+                      className="mb-4"
+                      variant={
+                        currentTenant?.paymentStatus === "paid" ? "default" : 
+                        currentTenant?.paymentStatus === "pending" ? "secondary" : "destructive"
+                      }
+                    >
+                      {currentTenant?.paymentStatus === "paid" ? "Pago" : 
+                       currentTenant?.paymentStatus === "pending" ? "Pendente" : "Atrasado"}
+                    </Badge>
+                    <div className="flex gap-2">
+                      <Button className="flex-1">Pagar Agora</Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={handleRequestBoleto}
+                      >
+                        Solicitar Boleto
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -549,16 +609,16 @@ const Dashboard = () => {
                   <CardTitle>Histórico de Pagamentos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-2 rounded border">
                       <span>Janeiro 2024</span>
                       <Badge>Pago</Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center p-2 rounded border">
                       <span>Dezembro 2023</span>
                       <Badge>Pago</Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center p-2 rounded border">
                       <span>Novembro 2023</span>
                       <Badge>Pago</Badge>
                     </div>
@@ -573,7 +633,7 @@ const Dashboard = () => {
               userType="tenant"
               currentTenantId={currentTenant?.id}
               currentPropertyId={currentTenant?.propertyId}
-              requests={repairRequests}
+              requests={tenantRepairRequests}
               onCreateRequest={handleCreateRepairRequest}
               onUpdateStatus={handleUpdateRepairStatus}
             />
