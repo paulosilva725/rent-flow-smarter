@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 const tenantSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   phone: z.string().min(1, "Telefone é obrigatório"),
   document: z.string().min(1, "CPF/CNPJ é obrigatório"),
   propertyId: z.string().min(1, "Selecione um imóvel"),
@@ -36,6 +37,7 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
     defaultValues: {
       name: "",
       email: "",
+      password: "",
       phone: "",
       document: "",
       propertyId: "",
@@ -126,18 +128,32 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
 
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+                      <FormLabel>Senha</FormLabel>
                       <FormControl>
-                        <Input placeholder="(11) 99999-9999" {...field} />
+                        <Input placeholder="Digite a senha" type="password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(11) 99999-9999" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}

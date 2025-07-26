@@ -235,25 +235,55 @@ const Dashboard = () => {
         return;
       }
 
-      // Criar o perfil do inquilino diretamente (sem criar usuário de autenticação)
-      const { data: profileData, error: profileError } = await supabase
+      // Criar usuário autenticado para o inquilino
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            role: 'tenant',
+            cpf: data.document,
+            phone: data.phone,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (authError) {
+        console.error("Erro ao criar usuário:", authError);
+        toast({
+          title: "Erro ao criar usuário",
+          description: authError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!authData.user) {
+        toast({
+          title: "Erro",
+          description: "Erro ao criar usuário no sistema de autenticação.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Aguardar um momento para o trigger criar o perfil
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Buscar o perfil criado automaticamente pelo trigger
+      const { data: profileData, error: profileFetchError } = await supabase
         .from("profiles")
-        .insert({
-          name: data.name,
-          email: data.email,
-          role: 'tenant',
-          phone: data.phone,
-          cpf: data.document,
-          status: 'active'
-        })
         .select("id")
+        .eq("user_id", authData.user.id)
         .single();
 
-      if (profileError) {
-        console.error("Erro ao criar perfil:", profileError);
+      if (profileFetchError || !profileData) {
+        console.error("Erro ao buscar perfil criado:", profileFetchError);
         toast({
-          title: "Erro ao criar inquilino",
-          description: profileError.message,
+          title: "Erro ao buscar perfil",
+          description: "O usuário foi criado mas houve erro ao buscar o perfil.",
           variant: "destructive",
         });
         return;
@@ -283,7 +313,7 @@ const Dashboard = () => {
 
       toast({
         title: "Inquilino cadastrado com sucesso!",
-        description: "O inquilino foi cadastrado e atribuído ao imóvel.",
+        description: "O inquilino foi cadastrado, atribuído ao imóvel e pode fazer login com email e senha.",
       });
       
       fetchAdminData();
