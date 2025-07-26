@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropertyForm } from "@/components/PropertyForm";
 import { TenantForm } from "@/components/TenantForm";
 import { PropertyManagement } from "@/components/PropertyManagement";
+import { RepairRequest } from "@/components/RepairRequest";
+import { AdminActions } from "@/components/AdminActions";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Building2, 
@@ -17,7 +19,9 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  BarChart3
+  BarChart3,
+  Wrench,
+  Home
 } from "lucide-react";
 
 interface Property {
@@ -45,6 +49,19 @@ interface Tenant {
   startDate?: string;
   endDate?: string;
   paymentStatus: 'paid' | 'pending' | 'overdue';
+}
+
+interface RepairRequest {
+  id: string;
+  title: string;
+  description: string;
+  category: 'electrical' | 'plumbing' | 'structural' | 'appliance' | 'other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in-progress' | 'completed';
+  requestDate: string;
+  completedDate?: string;
+  tenantId: string;
+  propertyId: string;
 }
 
 const Dashboard = () => {
@@ -78,6 +95,19 @@ const Dashboard = () => {
       rentAmount: "2500.00",
       paymentStatus: "paid"
     },
+  ]);
+  const [repairRequests, setRepairRequests] = useState<RepairRequest[]>([
+    {
+      id: "1",
+      title: "Torneira da cozinha gotejando",
+      description: "A torneira da cozinha está com vazamento constante",
+      category: "plumbing",
+      priority: "medium",
+      status: "pending",
+      requestDate: "15/01/2024",
+      tenantId: "1",
+      propertyId: "1"
+    }
   ]);
   const { toast } = useToast();
 
@@ -202,6 +232,53 @@ const Dashboard = () => {
     ));
   };
 
+  const handleCreateRepairRequest = (request: Omit<RepairRequest, 'id' | 'requestDate'>) => {
+    const newRequest: RepairRequest = {
+      ...request,
+      id: Date.now().toString(),
+      requestDate: new Date().toLocaleDateString('pt-BR')
+    };
+    setRepairRequests(prev => [...prev, newRequest]);
+  };
+
+  const handleUpdateRepairStatus = (requestId: string, status: RepairRequest['status']) => {
+    setRepairRequests(prev => prev.map(req => 
+      req.id === requestId 
+        ? { 
+            ...req, 
+            status,
+            completedDate: status === 'completed' ? new Date().toLocaleDateString('pt-BR') : undefined
+          }
+        : req
+    ));
+    
+    toast({
+      title: "Status atualizado",
+      description: `Solicitação marcada como ${status === 'pending' ? 'pendente' : status === 'in-progress' ? 'em andamento' : 'concluída'}.`
+    });
+  };
+
+  const handlePropertyAction = (action: string, propertyId: string) => {
+    toast({
+      title: "Ação executada",
+      description: `Ação "${action}" executada no imóvel ${propertyId}.`
+    });
+  };
+
+  const handleTenantAction = (action: string, tenantId: string) => {
+    toast({
+      title: "Ação executada", 
+      description: `Ação "${action}" executada no inquilino ${tenantId}.`
+    });
+  };
+
+  const handleBulkAction = (action: string, ids: string[]) => {
+    toast({
+      title: "Ação em massa executada",
+      description: `Ação "${action}" executada em ${ids.length} item(s).`
+    });
+  };
+
   if (userType === "admin") {
     return (
       <div className="min-h-screen bg-muted/30">
@@ -231,7 +308,7 @@ const Dashboard = () => {
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview" className="flex items-center space-x-2">
                 <BarChart3 className="h-4 w-4" />
                 <span>Visão Geral</span>
@@ -240,9 +317,13 @@ const Dashboard = () => {
                 <Settings className="h-4 w-4" />
                 <span>Gerenciar</span>
               </TabsTrigger>
-              <TabsTrigger value="reports" className="flex items-center space-x-2">
+              <TabsTrigger value="repairs" className="flex items-center space-x-2">
+                <Wrench className="h-4 w-4" />
+                <span>Reparos</span>
+              </TabsTrigger>
+              <TabsTrigger value="actions" className="flex items-center space-x-2">
                 <FileText className="h-4 w-4" />
-                <span>Relatórios</span>
+                <span>Ações Avançadas</span>
               </TabsTrigger>
             </TabsList>
 
@@ -377,25 +458,23 @@ const Dashboard = () => {
               />
             </TabsContent>
 
-            <TabsContent value="reports">
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>Relatórios</CardTitle>
-                  <CardDescription>Geração de relatórios financeiros e operacionais</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Button variant="outline" className="h-20 flex-col space-y-2">
-                      <FileText className="h-6 w-6" />
-                      <span>Relatório Financeiro</span>
-                    </Button>
-                    <Button variant="outline" className="h-20 flex-col space-y-2">
-                      <FileText className="h-6 w-6" />
-                      <span>Relatório de Ocupação</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <TabsContent value="repairs">
+              <RepairRequest
+                userType="admin"
+                requests={repairRequests}
+                onCreateRequest={handleCreateRepairRequest}
+                onUpdateStatus={handleUpdateRepairStatus}
+              />
+            </TabsContent>
+
+            <TabsContent value="actions">
+              <AdminActions
+                properties={properties}
+                tenants={tenants}
+                onPropertyAction={handlePropertyAction}
+                onTenantAction={handleTenantAction}
+                onBulkAction={handleBulkAction}
+              />
             </TabsContent>
           </Tabs>
         </main>
@@ -419,12 +498,14 @@ const Dashboard = () => {
   }
 
   // Tenant Dashboard (simplified version)
+  const currentTenant = tenants.find(t => t.id === "1"); // Simulating logged in tenant
+  
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="border-b bg-background shadow-card">
         <div className="flex h-16 items-center px-6">
           <div className="flex items-center space-x-2">
-            <Building2 className="h-6 w-6 text-primary" />
+            <Home className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold">Portal do Inquilino</h1>
           </div>
         </div>
@@ -436,42 +517,68 @@ const Dashboard = () => {
           <p className="text-muted-foreground">Apartamento 101 - Edifício Central</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Próximo Pagamento</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">R$ 2.500</p>
-                <p className="text-muted-foreground">Vencimento: 05/02/2024</p>
-                <Button className="mt-4 w-full">Pagar Agora</Button>
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="payment" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="payment" className="flex items-center space-x-2">
+              <DollarSign className="h-4 w-4" />
+              <span>Pagamentos</span>
+            </TabsTrigger>
+            <TabsTrigger value="repairs" className="flex items-center space-x-2">
+              <Wrench className="h-4 w-4" />
+              <span>Reparos</span>
+            </TabsTrigger>
+          </TabsList>
 
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Histórico de Pagamentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Janeiro 2024</span>
-                  <Badge>Pago</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Dezembro 2023</span>
-                  <Badge>Pago</Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span>Novembro 2023</span>
-                  <Badge>Pago</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="payment" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Próximo Pagamento</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">R$ 2.500</p>
+                    <p className="text-muted-foreground">Vencimento: 05/02/2024</p>
+                    <Button className="mt-4 w-full">Pagar Agora</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Histórico de Pagamentos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Janeiro 2024</span>
+                      <Badge>Pago</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dezembro 2023</span>
+                      <Badge>Pago</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Novembro 2023</span>
+                      <Badge>Pago</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="repairs">
+            <RepairRequest
+              userType="tenant"
+              currentTenantId={currentTenant?.id}
+              currentPropertyId={currentTenant?.propertyId}
+              requests={repairRequests}
+              onCreateRequest={handleCreateRepairRequest}
+              onUpdateStatus={handleUpdateRepairStatus}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
