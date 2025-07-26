@@ -375,6 +375,14 @@ const Dashboard = () => {
     ));
   };
 
+  const handleMarkAllAsRead = () => {
+    setChatMessages(prev => prev.map(msg => ({ ...msg, isRead: true })));
+    toast({
+      title: "Mensagens marcadas como lidas",
+      description: "Todas as mensagens foram marcadas como lidas."
+    });
+  };
+
   if (userType === "admin") {
     return (
       <div className="min-h-screen bg-muted/30">
@@ -587,23 +595,66 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="payments">
-              <PaymentProof
-                userType="admin"
-                proofs={paymentProofs}
-                onUploadProof={handleUploadPaymentProof}
-                onUpdateProofStatus={handleUpdateProofStatus}
-              />
+              <div className="space-y-4">
+                {paymentProofs.filter(p => p.status === 'pending').length > 0 && (
+                  <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <DollarSign className="h-5 w-5 text-orange-400" />
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-orange-700">
+                          Você tem {paymentProofs.filter(p => p.status === 'pending').length} comprovante(s) de pagamento pendente(s) para análise
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <PaymentProof
+                  userType="admin"
+                  proofs={paymentProofs}
+                  onUploadProof={handleUploadPaymentProof}
+                  onUpdateProofStatus={handleUpdateProofStatus}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="chat">
-              <InternalChat
-                userType="admin"
-                currentUserId="admin"
-                currentUserName="Administrador"
-                messages={chatMessages}
-                onSendMessage={handleSendMessage}
-                onMarkAsRead={handleMarkAsRead}
-              />
+              <div className="space-y-4">
+                {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length > 0 && (
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <MessageSquare className="h-5 w-5 text-blue-400" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-blue-700">
+                            Você tem {chatMessages.filter(m => !m.isRead && m.senderType === 'tenant').length} mensagem(ns) não lida(s) de inquilinos
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={handleMarkAllAsRead}
+                      >
+                        Marcar todas como lidas
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                <InternalChat
+                  userType="admin"
+                  currentUserId="admin"
+                  currentUserName="Administrador"
+                  messages={chatMessages}
+                  onSendMessage={handleSendMessage}
+                  onMarkAsRead={handleMarkAsRead}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="actions">
