@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PropertyForm } from "./PropertyForm";
 import { 
   Building2, 
   Users, 
@@ -165,6 +166,18 @@ export const PropertyManagement = ({
         title: "Arquivo não disponível",
         description: "O arquivo PDF não está mais disponível na memória. Faça upload novamente.",
         variant: "destructive"
+      });
+    }
+  };
+
+  const handleEditProperty = (data: any) => {
+    if (selectedProperty) {
+      const updatedProperty = { ...selectedProperty, ...data };
+      onUpdateProperty(updatedProperty);
+      setSelectedProperty(null);
+      toast({
+        title: "Imóvel atualizado",
+        description: "As informações do imóvel foram atualizadas com sucesso."
       });
     }
   };
@@ -346,6 +359,31 @@ export const PropertyManagement = ({
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog para editar propriedade */}
+      {selectedProperty && (
+        <Dialog open={!!selectedProperty} onOpenChange={() => setSelectedProperty(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Editar Imóvel</DialogTitle>
+            </DialogHeader>
+            <PropertyForm
+              onClose={() => setSelectedProperty(null)}
+              onSubmit={handleEditProperty}
+              initialData={{
+                name: selectedProperty.name,
+                address: selectedProperty.address,
+                rent: selectedProperty.rent,
+                description: selectedProperty.description || "",
+                bedrooms: selectedProperty.bedrooms || "",
+                bathrooms: selectedProperty.bathrooms || "",
+                area: selectedProperty.area || ""
+              }}
+              isEditing={true}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

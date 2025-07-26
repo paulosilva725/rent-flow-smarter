@@ -24,21 +24,23 @@ type PropertyFormData = z.infer<typeof propertySchema>;
 interface PropertyFormProps {
   onClose: () => void;
   onSubmit: (data: PropertyFormData) => void;
+  initialData?: Partial<PropertyFormData>;
+  isEditing?: boolean;
 }
 
-export const PropertyForm = ({ onClose, onSubmit }: PropertyFormProps) => {
+export const PropertyForm = ({ onClose, onSubmit, initialData, isEditing = false }: PropertyFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<PropertyFormData>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
-      name: "",
-      address: "",
-      rent: "",
-      description: "",
-      bedrooms: "",
-      bathrooms: "",
-      area: "",
+      name: initialData?.name || "",
+      address: initialData?.address || "",
+      rent: initialData?.rent || "",
+      description: initialData?.description || "",
+      bedrooms: initialData?.bedrooms || "",
+      bathrooms: initialData?.bathrooms || "",
+      area: initialData?.area || "",
     },
   });
 
@@ -60,8 +62,8 @@ export const PropertyForm = ({ onClose, onSubmit }: PropertyFormProps) => {
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Cadastrar Novo Imóvel</CardTitle>
-            <CardDescription>Preencha as informações do imóvel</CardDescription>
+            <CardTitle>{isEditing ? "Editar Imóvel" : "Cadastrar Novo Imóvel"}</CardTitle>
+            <CardDescription>{isEditing ? "Altere as informações do imóvel" : "Preencha as informações do imóvel"}</CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
