@@ -137,6 +137,7 @@ export type Database = {
           file_name: string
           file_url: string
           id: string
+          observation: string | null
           property_id: string | null
           reference_month: string
           rejection_reason: string | null
@@ -150,6 +151,7 @@ export type Database = {
           file_name: string
           file_url: string
           id?: string
+          observation?: string | null
           property_id?: string | null
           reference_month: string
           rejection_reason?: string | null
@@ -163,6 +165,7 @@ export type Database = {
           file_name?: string
           file_url?: string
           id?: string
+          observation?: string | null
           property_id?: string | null
           reference_month?: string
           rejection_reason?: string | null
