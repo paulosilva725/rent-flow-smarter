@@ -237,7 +237,7 @@ const Dashboard = () => {
       return;
     }
 
-    // Atualizar o perfil com informações adicionais
+    // Atualizar o perfil com informações adicionais e buscar o profile_id
     if (authData.user) {
       const { error: profileError } = await supabase
         .from("profiles")
@@ -247,12 +247,28 @@ const Dashboard = () => {
         })
         .eq("user_id", authData.user.id);
 
-      // Atribuir ao imóvel
+      // Buscar o profile_id para usar como tenant_id
+      const { data: profileData, error: fetchError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .single();
+
+      if (fetchError || !profileData) {
+        toast({
+          title: "Erro ao buscar perfil",
+          description: "Não foi possível encontrar o perfil criado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Atribuir ao imóvel usando o profile_id
       const { error: propertyError } = await supabase
         .from("properties")
         .update({
           is_occupied: true,
-          tenant_id: authData.user.id,
+          tenant_id: profileData.id,
           contract_start_date: data.startDate,
           contract_end_date: data.endDate,
         })
