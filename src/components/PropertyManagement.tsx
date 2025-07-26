@@ -234,9 +234,17 @@ export const PropertyManagement = ({
                     <TableCell>{property.address}</TableCell>
                     <TableCell>R$ {property.rent}</TableCell>
                     <TableCell>
-                      <Badge variant={property.isOccupied ? "default" : "secondary"}>
-                        {property.isOccupied ? "Ocupado" : "Disponível"}
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className={`w-3 h-3 rounded-full ${
+                            property.isOccupied ? 'bg-red-500' : 'bg-green-500'
+                          }`}
+                          title={property.isOccupied ? 'Imóvel ocupado' : 'Imóvel disponível'}
+                        />
+                        <Badge variant={property.isOccupied ? "destructive" : "default"}>
+                          {property.isOccupied ? "Ocupado" : "Disponível"}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {tenant ? tenant.name : "Nenhum"}

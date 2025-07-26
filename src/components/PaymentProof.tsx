@@ -89,8 +89,15 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
     });
   };
 
-  const handleViewFile = (fileUrl: string) => {
-    window.open(fileUrl, '_blank');
+  const handleViewFile = (fileUrl: string, fileName: string) => {
+    // Create download link for PDF
+    const link = document.createElement('a');
+    link.href = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/payment_proofs/${fileUrl}`;
+    link.download = fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusColor = (status: PaymentProof['status']) => {
@@ -218,10 +225,10 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleViewFile(proof.fileUrl)}
+                          onClick={() => handleViewFile(proof.fileUrl, proof.fileName)}
                         >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver PDF
+                          <Download className="h-4 w-4 mr-1" />
+                          Baixar PDF
                         </Button>
                       </div>
                       

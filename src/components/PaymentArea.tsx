@@ -165,7 +165,7 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
     try {
       // Upload do arquivo para o storage
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${tenantId}_${selectedMonth}_${Date.now()}.${fileExt}`;
+      const fileName = `${tenantId}/${Date.now()}_${selectedFile.name}`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("payment_proofs")
