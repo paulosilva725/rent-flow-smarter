@@ -50,7 +50,6 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
     try {
       await onSubmit(data);
       form.reset();
-      onClose();
     } catch (error) {
       console.error("Erro ao salvar inquilino:", error);
     } finally {
