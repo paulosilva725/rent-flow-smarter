@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { LogOut, Settings, Home, Users, MessageSquare, CreditCard, FileText, Wrench } from "lucide-react";
+import { LogOut, Settings, Home, Users, MessageSquare, CreditCard, FileText, Wrench, Edit3, Trash2 } from "lucide-react";
 import RealTimeChat from "@/components/RealTimeChat";
 import PaymentArea from "@/components/PaymentArea";
 import MercadoPagoSettings from "@/components/MercadoPagoSettings";
@@ -724,20 +724,38 @@ const Dashboard = () => {
                     {tenants.length === 0 ? (
                       <p className="text-muted-foreground">Nenhum inquilino cadastrado.</p>
                     ) : (
-                      tenants.map((tenant) => {
-                        const property = properties.find(p => p.tenant_id === tenant.id);
-                        return (
-                          <div key={tenant.id} className="flex items-center justify-between p-4 border rounded-lg">
-                            <div>
-                              <h3 className="font-medium">{tenant.name}</h3>
-                              <p className="text-sm text-muted-foreground">{tenant.email}</p>
-                              <p className="text-sm text-muted-foreground">Status: {tenant.status || 'ativo'}</p>
-                              {property && (
-                                <p className="text-sm text-muted-foreground">Imóvel: {property.name}</p>
-                              )}
-                            </div>
-                          </div>
-                        );
+                       tenants.map((tenant) => {
+                         const property = properties.find(p => p.tenant_id === tenant.id);
+                         return (
+                           <div key={tenant.id} className="flex items-center justify-between p-4 border rounded-lg">
+                             <div>
+                               <h3 className="font-medium">{tenant.name}</h3>
+                               <p className="text-sm text-muted-foreground">{tenant.email}</p>
+                               <p className="text-sm text-muted-foreground">Status: {tenant.status || 'ativo'}</p>
+                               {property && (
+                                 <p className="text-sm text-muted-foreground">Imóvel: {property.name}</p>
+                               )}
+                             </div>
+                             <div className="flex gap-2">
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => handleUpdateTenant(tenant)}
+                                 title="Editar inquilino"
+                               >
+                                 <Edit3 className="h-4 w-4" />
+                               </Button>
+                               <Button
+                                 variant="destructive"
+                                 size="sm"
+                                 onClick={() => handleDeleteTenant(tenant.id)}
+                                 title="Excluir inquilino"
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           </div>
+                         );
                       })
                     )}
                   </div>
