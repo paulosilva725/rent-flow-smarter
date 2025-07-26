@@ -88,8 +88,10 @@ interface ChatMessage {
 }
 
 const Dashboard = () => {
-  // Simular usuário logado - em produção seria baseado na autenticação real
-  const [userType, setUserType] = useState<"admin" | "tenant">("tenant"); // Mudando para tenant para testar
+  // Detectar tipo de usuário baseado no localStorage
+  const [userType, setUserType] = useState<"admin" | "tenant">(() => {
+    return (localStorage.getItem('userType') as "admin" | "tenant") || "tenant";
+  });
   const [currentUserId] = useState(userType === "admin" ? "admin" : "1"); // ID diferente para admin
   const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [showTenantForm, setShowTenantForm] = useState(false);

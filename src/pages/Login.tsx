@@ -5,19 +5,38 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Mail, Lock, User, Phone } from "lucide-react";
+import { Building2, Mail, Lock, User, Phone, CreditCard } from "lucide-react";
 
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate login
+    // Simulate admin login
     setTimeout(() => {
       setIsLoading(false);
+      localStorage.setItem('userType', 'admin');
       window.location.href = "/dashboard";
     }, 2000);
+  };
+
+  const handleTenantLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const formData = new FormData(e.target as HTMLFormElement);
+    const cpf = formData.get('cpf') as string;
+    
+    // Simulate validation of CPF against registered tenants
+    // In production, this would validate against the database
+    if (cpf) {
+      setTimeout(() => {
+        setIsLoading(false);
+        localStorage.setItem('userType', 'tenant');
+        localStorage.setItem('tenantCpf', cpf);
+        window.location.href = "/dashboard";
+      }, 2000);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -51,22 +70,24 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Entrar</TabsTrigger>
+            <Tabs defaultValue="admin" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="admin">Admin</TabsTrigger>
+                <TabsTrigger value="tenant">Inquilino</TabsTrigger>
                 <TabsTrigger value="register">Cadastrar</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
+              <TabsContent value="admin">
+                <form onSubmit={handleAdminLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="email"
+                        name="email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder="admin@demo.com"
                         className="pl-10"
                         required
                       />
@@ -78,6 +99,7 @@ const Login = () => {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="password"
+                        name="password"
                         type="password"
                         placeholder="••••••••"
                         className="pl-10"
@@ -101,23 +123,57 @@ const Login = () => {
                     className="w-full" 
                     disabled={isLoading}
                   >
-                    {isLoading ? "Entrando..." : "Entrar"}
+                    {isLoading ? "Entrando..." : "Entrar como Admin"}
                   </Button>
                 </form>
 
-                {/* Demo Accounts */}
                 <div className="mt-6 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-3 text-sm">Contas Demo:</h4>
+                  <h4 className="font-medium mb-3 text-sm">Conta Demo Admin:</h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span>admin@demo.com</span>
                       <Badge variant="outline" className="text-xs">Administrador</Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span>inquilino@demo.com</span>
-                      <Badge variant="secondary" className="text-xs">Inquilino</Badge>
-                    </div>
                     <p className="text-muted-foreground mt-2">Senha: demo123</p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="tenant">
+                <form onSubmit={handleTenantLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf">CPF</Label>
+                    <div className="relative">
+                      <CreditCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="cpf"
+                        name="cpf"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        className="pl-10"
+                        maxLength={14}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Entrando..." : "Entrar como Inquilino"}
+                  </Button>
+                </form>
+
+                <div className="mt-6 p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-3 text-sm">Acesso de Inquilino:</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span>Digite apenas o CPF cadastrado</span>
+                      <Badge variant="secondary" className="text-xs">Sem senha</Badge>
+                    </div>
+                    <p className="text-muted-foreground mt-2">CPF de teste: 123.456.789-00</p>
                   </div>
                 </div>
               </TabsContent>
