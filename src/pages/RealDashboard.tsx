@@ -187,13 +187,15 @@ const Dashboard = () => {
     if (repairsData) setRepairRequests(repairsData as any);
 
     // Buscar comprovantes de pagamento do inquilino
-    const { data: paymentProofsData } = await supabase
+    console.log("Buscando comprovantes para tenant_id:", tenantId);
+    const { data: paymentProofsData, error: proofsError } = await supabase
       .from("payment_proofs")
       .select("*")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
     console.log("Comprovantes de pagamento encontrados:", paymentProofsData);
+    console.log("Erro na consulta de comprovantes:", proofsError);
     if (paymentProofsData) setPaymentProofs(paymentProofsData);
   };
 
