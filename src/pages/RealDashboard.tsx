@@ -494,11 +494,11 @@ const Dashboard = () => {
       return;
     }
 
-    // Criar registro no banco
+    // Criar registro no banco - usar o ID do perfil do inquilino, não o user_id do auth
     const { error: insertError } = await supabase
       .from("payment_proofs")
       .insert({
-        tenant_id: user.id,
+        tenant_id: user.id, // Este já é o profile.id correto do inquilino
         property_id: userProperty?.id,
         file_name: file.name,
         file_url: fileName,
