@@ -16,6 +16,7 @@ import { Users, DollarSign, Calendar, AlertTriangle, Trash2 } from "lucide-react
 import PlanManagement from "@/components/PlanManagement";
 import UserBlockManagement from "@/components/UserBlockManagement";
 import EditAdminProfile from "@/components/EditAdminProfile";
+import AdminCreditsManagement from "@/components/AdminCreditsManagement";
 
 interface PropertyOwner {
   id: string;
@@ -34,6 +35,8 @@ interface PropertyOwner {
     is_blocked?: boolean;
     block_reason?: string;
     current_users_count?: number;
+    credits?: number;
+    credits_updated_at?: string;
   };
 }
 
@@ -75,7 +78,9 @@ export default function SystemDashboard() {
             monthly_amount,
             is_blocked,
             block_reason,
-            current_users_count
+            current_users_count,
+            credits,
+            credits_updated_at
           )
         `)
         .eq("role", "admin");
@@ -277,6 +282,7 @@ export default function SystemDashboard() {
                 <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Usuários</TableHead>
+                <TableHead>Créditos</TableHead>
                 <TableHead>Trial/Próximo Pagamento</TableHead>
                 <TableHead>Ações</TableHead>
                 <TableHead>Controle</TableHead>
@@ -304,6 +310,19 @@ export default function SystemDashboard() {
                     <span className="text-sm">
                       {owner.subscription?.current_users_count || 0} usuários
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-primary">
+                          {owner.subscription?.credits || 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {(owner.subscription?.credits || 0) === 1 ? "crédito" : "créditos"}
+                        </span>
+                      </div>
+                      <AdminCreditsManagement owner={owner} onUpdate={fetchPropertyOwners} />
+                    </div>
                   </TableCell>
                   <TableCell>
                     {owner.subscription?.status === 'trial' ? (
