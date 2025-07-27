@@ -27,6 +27,19 @@ interface AdminWithCredits {
   id: string;
   name: string;
   email: string;
+  system_subscriptions?: Array<{
+    id: string;
+    plan_type: string;
+    status: string;
+    trial_end_date: string;
+    next_payment_date: string;
+    monthly_amount: number;
+    is_blocked?: boolean;
+    block_reason?: string;
+    current_users_count?: number;
+    credits?: number;
+    credits_updated_at?: string;
+  }>;
   subscription?: {
     id: string;
     plan_type: string;
@@ -57,7 +70,8 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
   const [loadingTransactions, setLoadingTransactions] = useState(false);
 
   const fetchTransactions = async () => {
-    if (!owner.subscription?.id) return;
+    const subscription = owner.system_subscriptions?.[0];
+    if (!subscription?.id) return;
     
     setLoadingTransactions(true);
     try {
@@ -85,10 +99,13 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
 
   const handleCreditTransaction = async () => {
     console.log("handleCreditTransaction called", { creditAmount, owner });
-    console.log("Owner subscription:", owner.subscription);
     
-    if (!creditAmount || !owner.subscription?.id) {
-      console.log("Missing creditAmount or subscription ID", { creditAmount, subscriptionId: owner.subscription?.id });
+    // Fix: Access subscription from system_subscriptions array
+    const subscription = owner.system_subscriptions?.[0];
+    console.log("Subscription data:", subscription);
+    
+    if (!creditAmount || !subscription?.id) {
+      console.log("Missing creditAmount or subscription ID", { creditAmount, subscriptionId: subscription?.id });
       return;
     }
 
@@ -105,18 +122,18 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
 
     setLoading(true);
     try {
-      const currentCredits = owner.subscription.credits || 0;
+      const currentCredits = subscription.credits || 0;
       const newCredits = transactionType === "add" 
         ? currentCredits + amount 
         : Math.max(0, currentCredits - amount);
 
-      console.log("Updating subscription credits", { subscriptionId: owner.subscription.id, newCredits });
+      console.log("Updating subscription credits", { subscriptionId: subscription.id, newCredits });
 
       // Update subscription credits
       const { error: updateError } = await supabase
         .from("system_subscriptions")
         .update({ credits: newCredits })
-        .eq("id", owner.subscription.id);
+        .eq("id", subscription.id);
 
       if (updateError) {
         console.error("Update error:", updateError);
@@ -130,7 +147,7 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
         .from("credit_transactions")
         .insert({
           owner_id: owner.id,
-          subscription_id: owner.subscription.id,
+          subscription_id: subscription.id,
           credit_amount: transactionType === "add" ? amount : -amount,
           transaction_type: transactionType === "add" ? "purchase" : "deduction",
           description: description || `${transactionType === "add" ? "Adição" : "Remoção"} de ${amount} crédito(s)`,
@@ -163,7 +180,7 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
     }
   };
 
-  const currentCredits = owner.subscription?.credits || 0;
+  const currentCredits = owner.system_subscriptions?.[0]?.credits || 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
