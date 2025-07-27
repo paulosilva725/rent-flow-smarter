@@ -19,6 +19,10 @@ const Auth = () => {
     password: ""
   });
 
+  const [tenantLoginData, setTenantLoginData] = useState({
+    cpf: ""
+  });
+
   const [signupData, setSignupData] = useState({
     name: "",
     email: "",
@@ -43,6 +47,45 @@ const Auth = () => {
       toast({
         title: "Login realizado com sucesso!",
         description: "Você será redirecionado para o dashboard.",
+      });
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro no login",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTenantLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Buscar perfil pelo CPF
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('cpf', tenantLoginData.cpf)
+        .eq('role', 'tenant')
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('CPF não encontrado ou não é de um inquilino');
+      }
+
+      // Para login simplificado com CPF, criar sessão simulada
+      localStorage.setItem('tenant_cpf', tenantLoginData.cpf);
+      localStorage.setItem('tenant_profile', JSON.stringify(profile));
+      localStorage.setItem('userType', 'tenant');
+      
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao sistema!",
       });
 
       navigate("/dashboard");
@@ -105,13 +148,14 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
+          <Tabs defaultValue="admin" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="admin">Admin</TabsTrigger>
+              <TabsTrigger value="tenant">Inquilino</TabsTrigger>
               <TabsTrigger value="signup">Cadastro</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="login">
+            <TabsContent value="admin">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -134,8 +178,32 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Entrando..." : "Entrar"}
+                  {isLoading ? "Entrando..." : "Entrar como Admin"}
                 </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="tenant">
+              <form onSubmit={handleTenantLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tenant-cpf">CPF</Label>
+                  <Input
+                    id="tenant-cpf"
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={tenantLoginData.cpf}
+                    onChange={(e) => setTenantLoginData({ ...tenantLoginData, cpf: e.target.value })}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : "Entrar como Inquilino"}
+                </Button>
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Digite apenas o CPF cadastrado para acessar sua área.
+                  </p>
+                </div>
               </form>
             </TabsContent>
 

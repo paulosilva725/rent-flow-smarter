@@ -78,12 +78,24 @@ const Dashboard = () => {
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     
+    // Verificar se é login de inquilino por CPF (sem sessão auth)
+    const tenantCpf = localStorage.getItem('tenant_cpf');
+    const tenantProfile = localStorage.getItem('tenant_profile');
+    
+    if (!session && tenantCpf && tenantProfile) {
+      const profile = JSON.parse(tenantProfile);
+      setUser(profile);
+      await fetchTenantData(profile.id);
+      setLoading(false);
+      return;
+    }
+    
     if (!session) {
       navigate("/auth");
       return;
     }
 
-    // Buscar perfil do usuário
+    // Buscar perfil do usuário autenticado
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
@@ -180,6 +192,10 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    // Limpar dados do inquilino logado por CPF
+    localStorage.removeItem('tenant_cpf');
+    localStorage.removeItem('tenant_profile');
+    localStorage.removeItem('userType');
     navigate("/auth");
   };
 
