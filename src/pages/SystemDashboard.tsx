@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Users, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+import { Users, DollarSign, Calendar, AlertTriangle, Trash2 } from "lucide-react";
 import PlanManagement from "@/components/PlanManagement";
 import UserBlockManagement from "@/components/UserBlockManagement";
 import EditAdminProfile from "@/components/EditAdminProfile";
@@ -120,6 +120,42 @@ export default function SystemDashboard() {
       toast({
         title: "Erro",
         description: "Erro ao atualizar assinatura",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deletePropertyOwner = async (ownerId: string, ownerName: string) => {
+    if (!confirm(`Tem certeza que deseja excluir o proprietário "${ownerName}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      // First delete the subscription if it exists
+      await supabase
+        .from("system_subscriptions")
+        .delete()
+        .eq("owner_id", ownerId);
+
+      // Then delete the profile
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", ownerId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Proprietário "${ownerName}" excluído com sucesso`
+      });
+
+      fetchPropertyOwners();
+    } catch (error) {
+      console.error("Error deleting property owner:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir proprietário",
         variant: "destructive"
       });
     }
@@ -245,6 +281,7 @@ export default function SystemDashboard() {
                 <TableHead>Ações</TableHead>
                 <TableHead>Controle</TableHead>
                 <TableHead>Editar</TableHead>
+                <TableHead>Excluir</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -323,6 +360,15 @@ export default function SystemDashboard() {
                   </TableCell>
                   <TableCell>
                     <EditAdminProfile owner={owner} onUpdate={fetchPropertyOwners} />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deletePropertyOwner(owner.id, owner.name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
