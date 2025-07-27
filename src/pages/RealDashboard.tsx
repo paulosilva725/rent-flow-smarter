@@ -467,6 +467,7 @@ const Dashboard = () => {
             title: request.title,
             description: request.description,
             priority: request.priority,
+            category: request.category,
             tenant_id: request.tenantId,
             property_id: request.propertyId
           }

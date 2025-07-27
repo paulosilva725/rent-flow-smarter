@@ -452,6 +452,7 @@ export type Database = {
       }
       repair_requests: {
         Row: {
+          category: string | null
           created_at: string
           description: string
           id: string
@@ -463,6 +464,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description: string
           id?: string
@@ -474,6 +476,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string
           id?: string
