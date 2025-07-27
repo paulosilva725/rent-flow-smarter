@@ -170,6 +170,14 @@ export default function AdminBilling() {
                   <Coins className="h-4 w-4 text-yellow-600" />
                   <span className="font-semibold text-lg">{subscription.credits}</span>
                 </div>
+                {subscription.credits_updated_at && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Atualizado: {formatDistanceToNow(new Date(subscription.credits_updated_at), {
+                      addSuffix: true,
+                      locale: ptBR
+                    })}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Status</p>
