@@ -58,6 +58,55 @@ export default function SystemLogin() {
     }
   };
 
+  const createSystemOwner = async () => {
+    setLoading(true);
+    
+    try {
+      // Create the system owner account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: "admin@sistema.com",
+        password: "admin123",
+        options: {
+          data: {
+            name: "System Owner",
+            role: "system_owner"
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Update the profile role to system_owner
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ role: "system_owner" })
+          .eq("user_id", authData.user.id);
+
+        if (profileError) throw profileError;
+      }
+
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Agora você pode fazer login com admin@sistema.com / admin123"
+      });
+
+      // Pre-fill the form
+      setEmail("admin@sistema.com");
+      setPassword("admin123");
+
+    } catch (error: any) {
+      console.error("Create system owner error:", error);
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
       <Card className="w-full max-w-md">
@@ -116,9 +165,17 @@ export default function SystemLogin() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Credenciais padrão: admin@sistema.com / admin123
             </p>
+            <Button 
+              variant="outline" 
+              onClick={createSystemOwner}
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? "Criando..." : "Criar Conta System Owner"}
+            </Button>
           </div>
         </CardContent>
       </Card>
