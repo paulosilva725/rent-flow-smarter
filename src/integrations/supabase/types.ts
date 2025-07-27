@@ -310,6 +310,42 @@ export type Database = {
           },
         ]
       }
+      plan_configurations: {
+        Row: {
+          created_at: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          max_properties: number
+          max_users: number
+          monthly_amount: number
+          plan_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_properties?: number
+          max_users?: number
+          monthly_amount: number
+          plan_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_properties?: number
+          max_users?: number
+          monthly_amount?: number
+          plan_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           cpf: string | null
@@ -465,10 +501,72 @@ export type Database = {
           },
         ]
       }
+      system_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          invoice_url: string | null
+          owner_id: string | null
+          paid_at: string | null
+          payment_method: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_url?: string | null
+          owner_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_url?: string | null
+          owner_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_invoices_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "system_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_subscriptions: {
         Row: {
+          block_reason: string | null
           created_at: string
+          current_users_count: number | null
           id: string
+          invoice_due_date: string | null
+          invoice_url: string | null
+          is_blocked: boolean | null
           monthly_amount: number
           next_payment_date: string | null
           owner_id: string | null
@@ -481,8 +579,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          block_reason?: string | null
           created_at?: string
+          current_users_count?: number | null
           id?: string
+          invoice_due_date?: string | null
+          invoice_url?: string | null
+          is_blocked?: boolean | null
           monthly_amount: number
           next_payment_date?: string | null
           owner_id?: string | null
@@ -495,8 +598,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          block_reason?: string | null
           created_at?: string
+          current_users_count?: number | null
           id?: string
+          invoice_due_date?: string | null
+          invoice_url?: string | null
+          is_blocked?: boolean | null
           monthly_amount?: number
           next_payment_date?: string | null
           owner_id?: string | null

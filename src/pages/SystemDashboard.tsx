@@ -12,6 +12,8 @@ import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Users, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+import PlanManagement from "@/components/PlanManagement";
+import UserBlockManagement from "@/components/UserBlockManagement";
 
 interface PropertyOwner {
   id: string;
@@ -25,6 +27,9 @@ interface PropertyOwner {
     trial_end_date: string;
     next_payment_date: string;
     monthly_amount: number;
+    is_blocked?: boolean;
+    block_reason?: string;
+    current_users_count?: number;
   };
 }
 
@@ -61,7 +66,10 @@ export default function SystemDashboard() {
             status,
             trial_end_date,
             next_payment_date,
-            monthly_amount
+            monthly_amount,
+            is_blocked,
+            block_reason,
+            current_users_count
           )
         `)
         .eq("role", "admin");
@@ -225,8 +233,10 @@ export default function SystemDashboard() {
                 <TableHead>Email</TableHead>
                 <TableHead>Plano</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Usuários</TableHead>
                 <TableHead>Trial/Próximo Pagamento</TableHead>
                 <TableHead>Ações</TableHead>
+                <TableHead>Controle</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -238,7 +248,17 @@ export default function SystemDashboard() {
                     {owner.subscription ? getPlanLabel(owner.subscription.plan_type) : "Sem plano"}
                   </TableCell>
                   <TableCell>
-                    {owner.subscription ? getStatusBadge(owner.subscription.status) : "Sem assinatura"}
+                    <div className="flex items-center gap-2">
+                      {owner.subscription ? getStatusBadge(owner.subscription.status) : "Sem assinatura"}
+                      {owner.subscription?.is_blocked && (
+                        <Badge variant="destructive">Bloqueado</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">
+                      {owner.subscription?.current_users_count || 0} usuários
+                    </span>
                   </TableCell>
                   <TableCell>
                     {owner.subscription?.status === 'trial' ? (
@@ -290,12 +310,18 @@ export default function SystemDashboard() {
                       </Select>
                     </div>
                   </TableCell>
+                  <TableCell>
+                    <UserBlockManagement owner={owner} onUpdate={fetchPropertyOwners} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* Plan Management */}
+      <PlanManagement />
     </div>
   );
 }
