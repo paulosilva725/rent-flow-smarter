@@ -87,6 +87,7 @@ export default function SystemDashboard() {
         subscription: profile.system_subscriptions?.[0] || null
       })) || [];
 
+      console.log("Property owners data:", formattedData);
       setPropertyOwners(formattedData);
     } catch (error) {
       console.error("Error fetching property owners:", error);

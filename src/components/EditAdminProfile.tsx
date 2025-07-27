@@ -89,6 +89,8 @@ export default function EditAdminProfile({ owner, onUpdate }: EditAdminProfilePr
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  console.log("EditAdminProfile rendering for owner:", owner.name);
+  
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
