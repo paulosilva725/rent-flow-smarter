@@ -301,13 +301,13 @@ export const PropertyManagement = ({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {property.contractStartDate && property.contractEndDate ? (
+                     <TableCell>
+                      {tenant && tenant.startDate && tenant.endDate ? (
                         <div className="text-sm">
-                          <div>Início: {new Date(property.contractStartDate).toLocaleDateString('pt-BR')}</div>
-                          <div>Fim: {new Date(property.contractEndDate).toLocaleDateString('pt-BR')}</div>
+                          <div>Início: {new Date(tenant.startDate).toLocaleDateString('pt-BR')}</div>
+                          <div>Fim: {new Date(tenant.endDate).toLocaleDateString('pt-BR')}</div>
                           {(() => {
-                            const daysUntilExpiry = Math.ceil((new Date(property.contractEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                            const daysUntilExpiry = Math.ceil((new Date(tenant.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                             if (daysUntilExpiry <= 0) {
                               return <div className="text-red-600 text-xs">⚠️ Vencido há {Math.abs(daysUntilExpiry)} dias</div>;
                             } else if (daysUntilExpiry <= 30) {
