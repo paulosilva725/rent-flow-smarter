@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -272,6 +272,16 @@ const Auth = () => {
               </form>
             </TabsContent>
           </Tabs>
+          
+          {/* Link discreto para login do sistema */}
+          <div className="mt-6 text-center">
+            <Link 
+              to="/system-login" 
+              className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              Acesso do Sistema
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
