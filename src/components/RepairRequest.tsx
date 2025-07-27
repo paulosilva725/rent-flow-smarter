@@ -63,7 +63,8 @@ export const RepairRequest = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentTenantId || !currentPropertyId) {
+    // Para tenant, verificar se tem tenantId e propertyId
+    if (userType === 'tenant' && (!currentTenantId || !currentPropertyId)) {
       toast({
         title: "Erro",
         description: "Informações do inquilino não encontradas",
@@ -75,8 +76,8 @@ export const RepairRequest = ({
     onCreateRequest({
       ...formData,
       status: 'pending',
-      tenantId: currentTenantId,
-      propertyId: currentPropertyId
+      tenantId: currentTenantId || '',
+      propertyId: currentPropertyId || ''
     });
 
     toast({
