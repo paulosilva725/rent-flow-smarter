@@ -241,17 +241,24 @@ const Dashboard = () => {
   };
 
   const handleCreateTenant = async (data: any) => {
+    console.log("=== INÍCIO CRIAÇÃO INQUILINO ===");
     console.log("Dados recebidos para criar inquilino:", data);
     
     try {
+      console.log("1. Verificando se email já existe...");
       // Verificar se já existe um perfil com este email
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: checkError } = await supabase
         .from("profiles")
         .select("id, email")
         .eq("email", data.email)
-        .single();
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Erro ao verificar email existente:", checkError);
+      }
 
       if (existingProfile) {
+        console.log("Email já existe:", existingProfile);
         toast({
           title: "Email já cadastrado",
           description: "Já existe um usuário com este email no sistema.",
@@ -260,6 +267,7 @@ const Dashboard = () => {
         return;
       }
 
+      console.log("2. Email disponível, criando usuário...");
       // Criar usuário autenticado para o inquilino
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -275,6 +283,8 @@ const Dashboard = () => {
         },
       });
 
+      console.log("3. Resultado da criação de usuário:", { authData, authError });
+
       if (authError) {
         console.error("Erro ao criar usuário:", authError);
         toast({
@@ -286,6 +296,7 @@ const Dashboard = () => {
       }
 
       if (!authData.user) {
+        console.error("authData.user é null/undefined");
         toast({
           title: "Erro",
           description: "Erro ao criar usuário no sistema de autenticação.",
@@ -294,30 +305,86 @@ const Dashboard = () => {
         return;
       }
 
-      // Criar o perfil do inquilino diretamente
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          user_id: authData.user.id,
-          name: data.name,
-          email: data.email,
-          role: 'tenant',
-          phone: data.phone,
-          cpf: data.document,
-          status: 'active'
-        })
-        .select("id")
-        .single();
+      console.log("4. Usuário criado com sucesso, ID:", authData.user.id);
 
-      if (profileError) {
-        console.error("Erro ao criar perfil:", profileError);
-        toast({
-          title: "Erro ao criar perfil",
-          description: profileError.message,
-          variant: "destructive",
-        });
-        return;
+      // Aguardar um pouco para o trigger funcionar (se existir)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("5. Verificando se perfil foi criado automaticamente...");
+      const { data: autoProfile } = await supabase
+        .from("profiles")
+        .select("id, user_id")
+        .eq("user_id", authData.user.id)
+        .maybeSingle();
+
+      console.log("Perfil automático encontrado:", autoProfile);
+
+      let profileData;
+      if (autoProfile) {
+        console.log("6a. Atualizando perfil existente...");
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            name: data.name,
+            email: data.email,
+            role: 'tenant',
+            phone: data.phone,
+            cpf: data.document,
+            status: 'active'
+          })
+          .eq("user_id", authData.user.id)
+          .select("id")
+          .single();
+
+        console.log("Resultado da atualização:", { updatedProfile, updateError });
+        
+        if (updateError) {
+          console.error("Erro ao atualizar perfil:", updateError);
+          toast({
+            title: "Erro ao atualizar perfil",
+            description: updateError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        profileData = updatedProfile;
+      } else {
+        console.log("6b. Criando novo perfil...");
+        const { data: newProfile, error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: authData.user.id,
+            name: data.name,
+            email: data.email,
+            role: 'tenant',
+            phone: data.phone,
+            cpf: data.document,
+            status: 'active'
+          })
+          .select("id")
+          .single();
+
+        console.log("Resultado da criação do perfil:", { newProfile, profileError });
+
+        if (profileError) {
+          console.error("Erro ao criar perfil:", profileError);
+          toast({
+            title: "Erro ao criar perfil",
+            description: profileError.message,
+            variant: "destructive",
+          });
+          return;
+        }
+        profileData = newProfile;
       }
+
+      console.log("7. Perfil criado/atualizado com ID:", profileData.id);
+
+      console.log("8. Atualizando propriedade...", {
+        propertyId: data.propertyId,
+        tenantId: profileData.id,
+        rentAmount: parseFloat(data.rentAmount)
+      });
 
       // Atribuir o inquilino ao imóvel
       const { error: propertyError } = await supabase
@@ -331,6 +398,8 @@ const Dashboard = () => {
         })
         .eq("id", data.propertyId);
 
+      console.log("9. Resultado da atualização da propriedade:", propertyError);
+
       if (propertyError) {
         console.error("Erro ao atualizar propriedade:", propertyError);
         toast({
@@ -341,6 +410,7 @@ const Dashboard = () => {
         return;
       }
 
+      console.log("10. Sucesso! Finalizando...");
       toast({
         title: "Inquilino cadastrado com sucesso!",
         description: "O inquilino foi cadastrado, atribuído ao imóvel e pode fazer login com email/senha ou CPF.",
@@ -350,7 +420,7 @@ const Dashboard = () => {
       setShowTenantForm(false);
 
     } catch (error) {
-      console.error("Erro geral no cadastro:", error);
+      console.error("=== ERRO GERAL NO CADASTRO ===", error);
       toast({
         title: "Erro no cadastro",
         description: "Ocorreu um erro inesperado durante o cadastro.",
