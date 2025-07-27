@@ -48,7 +48,7 @@ export default function SystemDashboard() {
     // Check if user is authenticated as system owner
     const systemSession = localStorage.getItem('system_owner_session');
     if (!systemSession) {
-      navigate('/system-login');
+      navigate('/auth');
       return;
     }
     
@@ -176,7 +176,7 @@ export default function SystemDashboard() {
             variant="outline" 
             onClick={() => {
               localStorage.removeItem('system_owner_session');
-              navigate('/system-login');
+              navigate('/auth');
             }}
           >
             Sair

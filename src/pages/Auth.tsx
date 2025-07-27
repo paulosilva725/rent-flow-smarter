@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { Lock, User, Shield } from "lucide-react";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +28,11 @@ const Auth = () => {
     email: "",
     password: "",
     confirmPassword: ""
+  });
+
+  const [systemOwnerData, setSystemOwnerData] = useState({
+    email: "",
+    password: ""
   });
 
 
@@ -150,6 +155,41 @@ const Auth = () => {
     }
   };
 
+  const handleSystemOwnerLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // Verificação hardcoded para system owner
+      if (systemOwnerData.email === "admin@sistema.com" && systemOwnerData.password === "admin123") {
+        // Criar sessão local para system owner
+        localStorage.setItem('system_owner_session', JSON.stringify({
+          email: "admin@sistema.com",
+          name: "System Owner",
+          role: "system_owner",
+          login_time: new Date().toISOString()
+        }));
+
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo ao painel do sistema!",
+        });
+
+        navigate("/system-dashboard");
+      } else {
+        throw new Error("Credenciais inválidas para proprietário do sistema");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro no login",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -164,10 +204,11 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="login">Login Admin</TabsTrigger>
-              <TabsTrigger value="signup">Cadastro Admin</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="login">Admin</TabsTrigger>
+              <TabsTrigger value="signup">Cadastro</TabsTrigger>
               <TabsTrigger value="tenant">Inquilino</TabsTrigger>
+              <TabsTrigger value="system">Sistema</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -250,14 +291,18 @@ const Auth = () => {
               <form onSubmit={handleTenantLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="tenant-cpf">CPF</Label>
-                  <Input
-                    id="tenant-cpf"
-                    type="text"
-                    placeholder="000.000.000-00"
-                    value={tenantLoginData.cpf}
-                    onChange={(e) => setTenantLoginData({ ...tenantLoginData, cpf: e.target.value })}
-                    required
-                  />
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="tenant-cpf"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={tenantLoginData.cpf}
+                      onChange={(e) => setTenantLoginData({ ...tenantLoginData, cpf: e.target.value })}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Entrando..." : "Entrar como Inquilino"}
@@ -270,17 +315,53 @@ const Auth = () => {
               </form>
             </TabsContent>
 
+            <TabsContent value="system">
+              <form onSubmit={handleSystemOwnerLogin} className="space-y-4">
+                <div className="flex justify-center mb-4">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="system-email">Email do Sistema</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="system-email"
+                      type="email"
+                      placeholder="admin@sistema.com"
+                      value={systemOwnerData.email}
+                      onChange={(e) => setSystemOwnerData({ ...systemOwnerData, email: e.target.value })}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="system-password">Senha do Sistema</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="system-password"
+                      type="password"
+                      placeholder="Digite a senha"
+                      value={systemOwnerData.password}
+                      onChange={(e) => setSystemOwnerData({ ...systemOwnerData, password: e.target.value })}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Entrando..." : "Entrar no Sistema"}
+                </Button>
+                <div className="mt-4 p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Acesso restrito ao proprietário do sistema.
+                  </p>
+                </div>
+              </form>
+            </TabsContent>
+
           </Tabs>
-          
-          {/* Link discreto para login do sistema */}
-          <div className="mt-6 text-center">
-            <Link 
-              to="/system-login" 
-              className="text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              Acesso do Sistema
-            </Link>
-          </div>
         </CardContent>
       </Card>
     </div>

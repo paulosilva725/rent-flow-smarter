@@ -17,7 +17,7 @@ export default function UserSwitcher() {
     supabase.auth.signOut();
     localStorage.clear();
     // Redirecionar para login de system owner
-    navigate("/system-login");
+    navigate("/auth");
     setIsOpen(false);
     toast({
       title: "Alternando para System Owner",
