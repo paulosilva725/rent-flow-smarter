@@ -689,7 +689,7 @@ const Dashboard = () => {
     console.log("Dados do inquilino:", tenant);
     
     // Se está atualizando apenas o status de pagamento
-    if (tenant.paymentStatus) {
+    if (tenant.paymentStatus && !tenant.propertyId) {
       console.log("Atualizando status de pagamento para:", tenant.paymentStatus);
       
       // Encontrar a propriedade do inquilino
@@ -727,28 +727,67 @@ const Dashboard = () => {
       }
     } else {
       // Atualização completa do perfil do inquilino
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          name: tenant.name,
-          email: tenant.email,
-          phone: tenant.phone,
-          cpf: tenant.document,
-        })
-        .eq("id", tenant.id);
+      const currentProperty = properties.find(p => p.tenant_id === tenant.id);
+      const newPropertyId = tenant.propertyId;
+      
+      try {
+        // 1. Atualizar perfil do inquilino
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            name: tenant.name,
+            email: tenant.email,
+            phone: tenant.phone,
+            cpf: tenant.document,
+          })
+          .eq("id", tenant.id);
 
-      if (error) {
-        toast({
-          title: "Erro ao atualizar inquilino",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
+        if (profileError) throw profileError;
+
+        // 2. Se a propriedade mudou, atualizar as propriedades
+        if (newPropertyId && (!currentProperty || currentProperty.id !== newPropertyId)) {
+          // Liberar propriedade anterior se existir
+          if (currentProperty) {
+            const { error: unassignError } = await supabase
+              .from("properties")
+              .update({
+                is_occupied: false,
+                tenant_id: null,
+                contract_start_date: null,
+                contract_end_date: null,
+                payment_status: 'pending'
+              })
+              .eq("id", currentProperty.id);
+
+            if (unassignError) throw unassignError;
+          }
+
+          // Atribuir nova propriedade
+          const { error: assignError } = await supabase
+            .from("properties")
+            .update({
+              is_occupied: true,
+              tenant_id: tenant.id,
+              contract_start_date: tenant.startDate,
+              contract_end_date: tenant.endDate,
+              payment_status: 'pending'
+            })
+            .eq("id", newPropertyId);
+
+          if (assignError) throw assignError;
+        }
+
         toast({
           title: "Inquilino atualizado",
           description: "Os dados do inquilino foram atualizados.",
         });
         fetchAdminData();
+      } catch (error: any) {
+        toast({
+          title: "Erro ao atualizar inquilino",
+          description: error.message,
+          variant: "destructive",
+        });
       }
     }
   };
