@@ -465,6 +465,59 @@ export type Database = {
           },
         ]
       }
+      system_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_amount: number
+          next_payment_date: string | null
+          owner_id: string | null
+          plan_type: string
+          status: string
+          subscription_end_date: string | null
+          subscription_start_date: string | null
+          trial_end_date: string
+          trial_start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_amount: number
+          next_payment_date?: string | null
+          owner_id?: string | null
+          plan_type: string
+          status?: string
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          next_payment_date?: string | null
+          owner_id?: string | null
+          plan_type?: string
+          status?: string
+          subscription_end_date?: string | null
+          subscription_start_date?: string | null
+          trial_end_date?: string
+          trial_start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_subscriptions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
