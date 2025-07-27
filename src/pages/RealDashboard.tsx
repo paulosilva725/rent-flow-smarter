@@ -19,6 +19,7 @@ import LateFeeSettings from "@/components/LateFeeSettings";
 import LateFeeView from "@/components/LateFeeView";
 import { ReportsSystem } from "@/components/ReportsSystem";
 import AdminBilling from "@/components/AdminBilling";
+import UserSwitcher from "@/components/UserSwitcher";
 
 interface User {
   id: string;
@@ -728,10 +729,13 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair
-          </Button>
+          <div className="flex items-center gap-2">
+            <UserSwitcher />
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
+            </Button>
+          </div>
         </div>
       </header>
 
