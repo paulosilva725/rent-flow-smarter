@@ -1113,6 +1113,32 @@ const Dashboard = () => {
                         {userProperty.bathrooms && <span>{userProperty.bathrooms} banheiros</span>}
                         {userProperty.area && <span>{userProperty.area}m²</span>}
                       </div>
+                      
+                      {/* Status de Pagamento */}
+                      <div className="mt-4 p-3 bg-muted rounded-lg">
+                        <h4 className="font-medium">Status de Pagamento</h4>
+                        <div className="flex items-center gap-2 mt-2">
+                          {(userProperty as any).payment_status === 'paid' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              ✅ Pago
+                            </span>
+                          )}
+                          {(userProperty as any).payment_status === 'pending' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              ⏳ Pendente
+                            </span>
+                          )}
+                          {(userProperty as any).payment_status === 'overdue' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              ⚠️ Atrasado
+                            </span>
+                          )}
+                          <span className="text-sm text-muted-foreground ml-2">
+                            Status do pagamento do mês atual
+                          </span>
+                        </div>
+                      </div>
+
                       {userProperty.contract_start_date && userProperty.contract_end_date && (
                         <div className="mt-4 p-3 bg-muted rounded-lg">
                           <h4 className="font-medium">Informações do Contrato</h4>
