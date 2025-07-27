@@ -136,6 +136,61 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          credit_amount: number
+          description: string | null
+          id: string
+          owner_id: string | null
+          subscription_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          credit_amount: number
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          subscription_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          credit_amount?: number
+          description?: string | null
+          id?: string
+          owner_id?: string | null
+          subscription_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "system_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       late_fees: {
         Row: {
           created_at: string
@@ -568,6 +623,8 @@ export type Database = {
         Row: {
           block_reason: string | null
           created_at: string
+          credits: number | null
+          credits_updated_at: string | null
           current_users_count: number | null
           id: string
           invoice_due_date: string | null
@@ -587,6 +644,8 @@ export type Database = {
         Insert: {
           block_reason?: string | null
           created_at?: string
+          credits?: number | null
+          credits_updated_at?: string | null
           current_users_count?: number | null
           id?: string
           invoice_due_date?: string | null
@@ -606,6 +665,8 @@ export type Database = {
         Update: {
           block_reason?: string | null
           created_at?: string
+          credits?: number | null
+          credits_updated_at?: string | null
           current_users_count?: number | null
           id?: string
           invoice_due_date?: string | null
