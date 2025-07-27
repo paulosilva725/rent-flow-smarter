@@ -84,10 +84,17 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
   }, [isOpen, owner.id]);
 
   const handleCreditTransaction = async () => {
-    if (!creditAmount || !owner.subscription?.id) return;
+    console.log("handleCreditTransaction called", { creditAmount, owner });
+    console.log("Owner subscription:", owner.subscription);
+    
+    if (!creditAmount || !owner.subscription?.id) {
+      console.log("Missing creditAmount or subscription ID", { creditAmount, subscriptionId: owner.subscription?.id });
+      return;
+    }
 
     const amount = parseInt(creditAmount);
     if (isNaN(amount) || amount <= 0) {
+      console.log("Invalid amount:", amount);
       toast({
         title: "Erro",
         description: "Quantidade de créditos deve ser um número positivo",
@@ -103,13 +110,20 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
         ? currentCredits + amount 
         : Math.max(0, currentCredits - amount);
 
+      console.log("Updating subscription credits", { subscriptionId: owner.subscription.id, newCredits });
+
       // Update subscription credits
       const { error: updateError } = await supabase
         .from("system_subscriptions")
         .update({ credits: newCredits })
         .eq("id", owner.subscription.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Update error:", updateError);
+        throw updateError;
+      }
+
+      console.log("Credits updated successfully, now recording transaction");
 
       // Record transaction
       const { error: transactionError } = await supabase
@@ -123,7 +137,10 @@ export default function AdminCreditsManagement({ owner, onUpdate }: AdminCredits
           created_by: null // System owner
         });
 
-      if (transactionError) throw transactionError;
+      if (transactionError) {
+        console.error("Transaction error:", transactionError);
+        throw transactionError;
+      }
 
       toast({
         title: "Sucesso",
