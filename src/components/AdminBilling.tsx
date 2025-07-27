@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CreditCard, FileText, Calendar, Coins } from "lucide-react";
 
@@ -139,6 +139,17 @@ export default function AdminBilling() {
     return planMap[plan as keyof typeof planMap] || plan;
   };
 
+  const getCreditExpirationDays = (creditsUpdatedAt?: string) => {
+    if (!creditsUpdatedAt) return null;
+    
+    const updatedDate = new Date(creditsUpdatedAt);
+    const expirationDate = addDays(updatedDate, 30); // Créditos válidos por 30 dias
+    const today = new Date();
+    const daysRemaining = differenceInDays(expirationDate, today);
+    
+    return daysRemaining;
+  };
+
   if (loading) {
     return <div className="p-6">Carregando...</div>;
   }
@@ -171,12 +182,25 @@ export default function AdminBilling() {
                   <span className="font-semibold text-lg">{subscription.credits}</span>
                 </div>
                 {subscription.credits_updated_at && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Atualizado: {formatDistanceToNow(new Date(subscription.credits_updated_at), {
-                      addSuffix: true,
-                      locale: ptBR
-                    })}
-                  </p>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    <p>
+                      Atualizado: {formatDistanceToNow(new Date(subscription.credits_updated_at), {
+                        addSuffix: true,
+                        locale: ptBR
+                      })}
+                    </p>
+                    {(() => {
+                      const daysRemaining = getCreditExpirationDays(subscription.credits_updated_at);
+                      if (daysRemaining !== null) {
+                        return (
+                          <p className={`font-medium ${daysRemaining <= 7 ? 'text-red-600' : daysRemaining <= 15 ? 'text-yellow-600' : 'text-green-600'}`}>
+                            {daysRemaining > 0 ? `${daysRemaining} dias restantes` : 'Créditos expirados'}
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                 )}
               </div>
               <div>
