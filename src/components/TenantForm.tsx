@@ -9,10 +9,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 
-const tenantSchema = z.object({
+const createTenantSchema = (isEditing = false) => z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: isEditing 
+    ? z.string().optional() 
+    : z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   phone: z.string().min(1, "Telefone é obrigatório"),
   document: z.string().min(1, "CPF/CNPJ é obrigatório"),
   propertyId: z.string().min(1, "Selecione um imóvel"),
@@ -21,29 +23,31 @@ const tenantSchema = z.object({
   endDate: z.string().min(1, "Data de fim é obrigatória"),
 });
 
-type TenantFormData = z.infer<typeof tenantSchema>;
+type TenantFormData = z.infer<ReturnType<typeof createTenantSchema>>;
 
 interface TenantFormProps {
   onClose: () => void;
   onSubmit: (data: TenantFormData) => void;
   properties: Array<{ id: string; name: string; rent: string }>;
+  initialData?: Partial<TenantFormData>;
+  isEditing?: boolean;
 }
 
-export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) => {
+export const TenantForm = ({ onClose, onSubmit, properties, initialData, isEditing }: TenantFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<TenantFormData>({
-    resolver: zodResolver(tenantSchema),
+    resolver: zodResolver(createTenantSchema(isEditing)),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      phone: "",
-      document: "",
-      propertyId: "",
-      rentAmount: "",
-      startDate: "",
-      endDate: "",
+      name: initialData?.name || "",
+      document: initialData?.document || "",
+      email: initialData?.email || "",
+      password: initialData?.password || "",
+      phone: initialData?.phone || "",
+      propertyId: initialData?.propertyId || "",
+      rentAmount: initialData?.rentAmount || "",
+      startDate: initialData?.startDate || "",
+      endDate: initialData?.endDate || "",
     },
   });
 
@@ -71,7 +75,7 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Cadastrar Novo Inquilino</CardTitle>
+            <CardTitle>{isEditing ? "Editar Inquilino" : "Cadastrar Novo Inquilino"}</CardTitle>
             <CardDescription>Preencha as informações do inquilino e contrato</CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
@@ -131,9 +135,13 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Senha</FormLabel>
+                      <FormLabel>{isEditing ? "Senha (deixe vazio para manter)" : "Senha"}</FormLabel>
                       <FormControl>
-                        <Input placeholder="Digite a senha" type="password" {...field} />
+                        <Input 
+                          placeholder={isEditing ? "Digite nova senha ou deixe vazio" : "Digite a senha"} 
+                          type="password" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -161,10 +169,13 @@ export const TenantForm = ({ onClose, onSubmit, properties }: TenantFormProps) =
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Imóvel</FormLabel>
-                    <Select onValueChange={(value) => {
-                      field.onChange(value);
-                      handlePropertyChange(value);
-                    }}>
+                    <Select 
+                      value={field.value}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handlePropertyChange(value);
+                      }}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um imóvel" />

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { PropertyForm } from "./PropertyForm";
+import { TenantForm } from "./TenantForm";
 import { 
   Building2, 
   Users, 
@@ -451,6 +452,49 @@ export const PropertyManagement = ({
                 bathrooms: selectedProperty.bathrooms || "",
                 area: selectedProperty.area || "",
                 securityDeposit: selectedProperty.security_deposit || ""
+              }}
+              isEditing={true}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Dialog para editar inquilino */}
+      {selectedTenant && (
+        <Dialog open={!!selectedTenant} onOpenChange={() => setSelectedTenant(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Editar Inquilino</DialogTitle>
+            </DialogHeader>
+            <TenantForm
+              onClose={() => setSelectedTenant(null)}
+              onSubmit={(data) => {
+                if (selectedTenant) {
+                  const updatedTenant = {
+                    ...selectedTenant,
+                    name: data.name,
+                    email: data.email,
+                    phone: data.phone,
+                    document: data.document,
+                    propertyId: data.propertyId,
+                    rentAmount: data.rentAmount,
+                    startDate: data.startDate,
+                    endDate: data.endDate
+                  };
+                  onUpdateTenant(updatedTenant);
+                  setSelectedTenant(null);
+                }
+              }}
+              properties={properties}
+              initialData={{
+                name: selectedTenant.name,
+                email: selectedTenant.email,
+                phone: selectedTenant.phone || "",
+                document: selectedTenant.document || "",
+                propertyId: selectedTenant.propertyId,
+                rentAmount: selectedTenant.rentAmount || "",
+                startDate: selectedTenant.startDate || "",
+                endDate: selectedTenant.endDate || ""
               }}
               isEditing={true}
             />
