@@ -843,10 +843,275 @@ const Dashboard = () => {
     return null;
   }
 
+  // Only apply AdminAccessBlock for admin users - this is the fix!
+  if (user.role === "admin") {
+    return (
+      <AdminAccessBlock>
+        <div className="min-h-screen bg-background">
+          <header className="border-b bg-card">
+            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Home className="w-8 h-8 text-primary" />
+                <div>
+                  <h1 className="text-xl font-bold">Sistema de Gerenciamento</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Bem-vindo, {user.name} (Administrador)
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <UserSwitcher />
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </Button>
+              </div>
+            </div>
+          </header>
+
+          <div className="container mx-auto px-4 py-6">
+            <Tabs defaultValue="properties" className="w-full">
+              <TabsList className="grid w-full grid-cols-9">
+                <TabsTrigger value="properties">Propriedades</TabsTrigger>
+                <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
+                <TabsTrigger value="assignments">Designações</TabsTrigger>
+                <TabsTrigger value="repairs">Reparos</TabsTrigger>
+                <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+                <TabsTrigger value="billing">Meu Plano</TabsTrigger>
+                <TabsTrigger value="settings">Configurações</TabsTrigger>
+                <TabsTrigger value="reports">Relatórios</TabsTrigger>
+                <TabsTrigger value="chat">Chat</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="properties">
+                <PropertyManagement
+                  properties={properties.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    rent: p.rent_amount.toString(),
+                    address: p.address,
+                    description: p.description,
+                    bedrooms: p.bedrooms?.toString(),
+                    bathrooms: p.bathrooms?.toString(),
+                    area: p.area?.toString(),
+                    isOccupied: p.is_occupied,
+                    tenantId: p.tenant_id,
+                    contractFile: p.contract_file_url,
+                    contractStartDate: p.contract_start_date,
+                    contractEndDate: p.contract_end_date
+                  }))}
+                  tenants={tenants.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    email: t.email,
+                    phone: t.phone,
+                    document: t.cpf,
+                    propertyId: properties.find(p => p.tenant_id === t.id)?.id || '',
+                    rentAmount: properties.find(p => p.tenant_id === t.id)?.rent_amount.toString(),
+                    startDate: properties.find(p => p.tenant_id === t.id)?.contract_start_date,
+                    endDate: properties.find(p => p.tenant_id === t.id)?.contract_end_date,
+                    paymentStatus: (properties.find(p => p.tenant_id === t.id) as any)?.payment_status || 'pending' as const
+                  }))}
+                  onUpdateProperty={handleUpdateProperty}
+                  onDeleteProperty={handleDeleteProperty}
+                  onUpdateTenant={handleUpdateTenant}
+                  onDeleteTenant={handleDeleteTenant}
+                  onUploadContract={handleUploadContract}
+                  onCreateProperty={() => setShowPropertyForm(true)}
+                />
+              </TabsContent>
+
+              <TabsContent value="tenants">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Gerenciar Inquilinos</CardTitle>
+                    <Button onClick={() => setShowTenantForm(true)}>
+                      Cadastrar Inquilino
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {tenants.length === 0 ? (
+                        <p className="text-muted-foreground">Nenhum inquilino cadastrado.</p>
+                      ) : (
+                         tenants.map((tenant) => {
+                           const property = properties.find(p => p.tenant_id === tenant.id);
+                           return (
+                             <div key={tenant.id} className="flex items-center justify-between p-4 border rounded-lg">
+                               <div>
+                                 <h3 className="font-medium">{tenant.name}</h3>
+                                 <p className="text-sm text-muted-foreground">{tenant.email}</p>
+                                 <p className="text-sm text-muted-foreground">Status: {tenant.status || 'ativo'}</p>
+                                 {property && (
+                                   <p className="text-sm text-muted-foreground">Imóvel: {property.name}</p>
+                                 )}
+                               </div>
+                               <div className="flex gap-2">
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => handleUpdateTenant(tenant)}
+                                   title="Editar inquilino"
+                                 >
+                                   <Edit3 className="h-4 w-4" />
+                                 </Button>
+                                 <Button
+                                   variant="destructive"
+                                   size="sm"
+                                   onClick={() => handleDeleteTenant(tenant.id)}
+                                   title="Excluir inquilino"
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                             </div>
+                           );
+                        })
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="assignments">
+                <TenantAssignment
+                  properties={properties}
+                  tenants={tenants.map(t => ({ ...t, status: t.status || 'active' }))}
+                  onAssignTenant={handleAssignTenant}
+                  onUnassignTenant={handleUnassignTenant}
+                />
+              </TabsContent>
+
+              <TabsContent value="repairs">
+                <RepairRequest
+                  userType="admin"
+                  requests={repairRequests.map(req => ({
+                    id: req.id,
+                    title: req.title,
+                    description: req.description,
+                    category: 'other' as const,
+                    priority: req.priority as any,
+                    status: req.status as any,
+                    requestDate: new Date(req.created_at).toLocaleDateString(),
+                    tenantId: req.tenant_id || '',
+                    propertyId: req.property_id || ''
+                  }))}
+                  onCreateRequest={(request) => createRepairRequest({
+                    title: request.title,
+                    description: request.description,
+                    priority: request.priority,
+                    category: request.category,
+                    tenantId: request.tenantId,
+                    propertyId: request.propertyId
+                  })}
+                  onUpdateStatus={updateRepairRequestStatus}
+                />
+              </TabsContent>
+
+              <TabsContent value="payments">
+                <div className="space-y-6">
+                  <PaymentProof
+                    userType="admin"
+                    proofs={paymentProofs.map(proof => ({
+                      id: proof.id,
+                      fileName: proof.file_name,
+                      fileUrl: proof.file_url,
+                      uploadDate: proof.created_at,
+                      status: proof.status,
+                      monthReference: proof.reference_month,
+                      amount: proof.amount.toString(),
+                      rejectionReason: proof.rejection_reason,
+                      observation: proof.observation
+                    }))}
+                    onUploadProof={handleUploadPaymentProof}
+                    onUpdateProofStatus={updatePaymentProofStatus}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="billing">
+                <AdminBilling />
+              </TabsContent>
+
+              <TabsContent value="settings">
+                <div className="space-y-6">
+                  <MercadoPagoSettings adminId={user.id} />
+                  <LateFeeSettings adminId={user.id} />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reports">
+                <ReportsSystem 
+                  properties={properties.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    address: p.address,
+                    rent_amount: p.rent_amount,
+                    is_occupied: p.is_occupied,
+                    tenant_id: p.tenant_id || undefined
+                  }))}
+                  tenants={tenants.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    email: t.email,
+                    property_id: properties.find(p => p.tenant_id === t.id)?.id
+                  }))}
+                  payments={paymentProofs.map(proof => ({
+                    id: proof.id,
+                    amount: proof.amount,
+                    status: proof.status,
+                    reference_month: proof.reference_month,
+                    tenant_id: proof.tenant_id,
+                    property_id: proof.property_id
+                  }))}
+                  repairRequests={repairRequests.map(req => ({
+                    id: req.id,
+                    title: req.title,
+                    description: req.description,
+                    category: 'other' as const,
+                    priority: req.priority,
+                    status: req.status,
+                    requestDate: new Date(req.created_at).toLocaleDateString(),
+                    tenantId: req.tenant_id || '',
+                    propertyId: req.property_id || ''
+                  }))}
+                />
+              </TabsContent>
+
+              <TabsContent value="chat">
+                <RealTimeChat currentUser={user} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Modal do formulário de propriedade */}
+          {showPropertyForm && (
+            <PropertyForm
+              onClose={() => setShowPropertyForm(false)}
+              onSubmit={handleCreateProperty}
+            />
+          )}
+
+          {/* Modal do formulário de inquilino */}
+          {showTenantForm && (
+            <TenantForm
+              onClose={() => setShowTenantForm(false)}
+              onSubmit={handleCreateTenant}
+              properties={properties.filter(p => !p.is_occupied).map(p => ({ 
+                id: p.id, 
+                name: p.name, 
+                rent: p.rent_amount.toString() 
+              }))}
+            />
+          )}
+        </div>
+      </AdminAccessBlock>
+    );
+  }
+
+  // For tenants, render directly without AdminAccessBlock - this ensures tenants are never blocked!
   return (
-    <AdminAccessBlock>
-      <div className="min-h-screen bg-background">
-      {/* Header */}
+    <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -854,419 +1119,179 @@ const Dashboard = () => {
             <div>
               <h1 className="text-xl font-bold">Sistema de Gerenciamento</h1>
               <p className="text-sm text-muted-foreground">
-                Bem-vindo, {user.name} ({user.role === "admin" ? "Administrador" : "Inquilino"})
+                Bem-vindo, {user.name} (Inquilino)
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <UserSwitcher />
+          <div className="flex items-center gap-4">
             <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="h-4 w-4 mr-2" />
               Sair
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
-        {user?.role === "admin" && (
-          <Tabs defaultValue="properties" className="w-full">
-            <TabsList className="grid w-full grid-cols-9">
-              <TabsTrigger value="properties">Propriedades</TabsTrigger>
-              <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
-              <TabsTrigger value="assignments">Designações</TabsTrigger>
-              <TabsTrigger value="repairs">Reparos</TabsTrigger>
-              <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-              <TabsTrigger value="billing">Meu Plano</TabsTrigger>
-              <TabsTrigger value="settings">Configurações</TabsTrigger>
-              <TabsTrigger value="reports">Relatórios</TabsTrigger>
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-            </TabsList>
+      <div className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="property" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 max-w-lg">
+            <TabsTrigger value="property">Meu Imóvel</TabsTrigger>
+            <TabsTrigger value="repairs">Reparos</TabsTrigger>
+            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+            <TabsTrigger value="fees">Taxas</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="properties">
-              <PropertyManagement
-                properties={properties.map(p => ({
-                  id: p.id,
-                  name: p.name,
-                  rent: p.rent_amount.toString(),
-                  address: p.address,
-                  description: p.description,
-                  bedrooms: p.bedrooms?.toString(),
-                  bathrooms: p.bathrooms?.toString(),
-                  area: p.area?.toString(),
-                  isOccupied: p.is_occupied,
-                  tenantId: p.tenant_id,
-                  contractFile: p.contract_file_url,
-                  contractStartDate: p.contract_start_date,
-                  contractEndDate: p.contract_end_date
-                }))}
-                tenants={tenants.map(t => ({
-                  id: t.id,
-                  name: t.name,
-                  email: t.email,
-                  phone: t.phone,
-                  document: t.cpf,
-                  propertyId: properties.find(p => p.tenant_id === t.id)?.id || '',
-                  rentAmount: properties.find(p => p.tenant_id === t.id)?.rent_amount.toString(),
-                  startDate: properties.find(p => p.tenant_id === t.id)?.contract_start_date,
-                  endDate: properties.find(p => p.tenant_id === t.id)?.contract_end_date,
-                  paymentStatus: (properties.find(p => p.tenant_id === t.id) as any)?.payment_status || 'pending' as const
-                }))}
-                onUpdateProperty={handleUpdateProperty}
-                onDeleteProperty={handleDeleteProperty}
-                onUpdateTenant={handleUpdateTenant}
-                onDeleteTenant={handleDeleteTenant}
-                onUploadContract={handleUploadContract}
-                onCreateProperty={() => setShowPropertyForm(true)}
-              />
-            </TabsContent>
-
-            <TabsContent value="tenants">
+          <TabsContent value="property">
+            {userProperty ? (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Gerenciar Inquilinos</CardTitle>
-                  <Button onClick={() => setShowTenantForm(true)}>
-                    Cadastrar Inquilino
-                  </Button>
+                <CardHeader>
+                  <CardTitle>Minha Propriedade</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {tenants.length === 0 ? (
-                      <p className="text-muted-foreground">Nenhum inquilino cadastrado.</p>
-                    ) : (
-                       tenants.map((tenant) => {
-                         const property = properties.find(p => p.tenant_id === tenant.id);
-                         return (
-                           <div key={tenant.id} className="flex items-center justify-between p-4 border rounded-lg">
-                             <div>
-                               <h3 className="font-medium">{tenant.name}</h3>
-                               <p className="text-sm text-muted-foreground">{tenant.email}</p>
-                               <p className="text-sm text-muted-foreground">Status: {tenant.status || 'ativo'}</p>
-                               {property && (
-                                 <p className="text-sm text-muted-foreground">Imóvel: {property.name}</p>
-                               )}
-                             </div>
-                             <div className="flex gap-2">
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={() => handleUpdateTenant(tenant)}
-                                 title="Editar inquilino"
-                               >
-                                 <Edit3 className="h-4 w-4" />
-                               </Button>
-                               <Button
-                                 variant="destructive"
-                                 size="sm"
-                                 onClick={() => handleDeleteTenant(tenant.id)}
-                                 title="Excluir inquilino"
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </div>
-                           </div>
-                         );
-                      })
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium">{userProperty.name}</h3>
+                    <p className="text-muted-foreground">{userProperty.address}</p>
+                    <p className="text-lg font-semibold text-primary">
+                      Aluguel: R$ {userProperty.rent_amount.toFixed(2)}
+                    </p>
+                    {userProperty.description && (
+                      <p className="text-sm">{userProperty.description}</p>
+                    )}
+                    <div className="flex gap-4 text-sm text-muted-foreground">
+                      {userProperty.bedrooms && <span>{userProperty.bedrooms} quartos</span>}
+                      {userProperty.bathrooms && <span>{userProperty.bathrooms} banheiros</span>}
+                      {userProperty.area && <span>{userProperty.area}m²</span>}
+                    </div>
+                    
+                    {/* Status de Pagamento */}
+                    <div className="mt-4 p-3 bg-muted rounded-lg">
+                      <h4 className="font-medium">Status de Pagamento</h4>
+                      <div className="flex items-center gap-2 mt-2">
+                        {(userProperty as any).payment_status === 'paid' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            ✅ Pago
+                          </span>
+                        )}
+                        {(userProperty as any).payment_status === 'pending' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            ⏳ Pendente
+                          </span>
+                        )}
+                        {(userProperty as any).payment_status === 'overdue' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            ⚠️ Atrasado
+                          </span>
+                        )}
+                        <span className="text-sm text-muted-foreground ml-2">
+                          Status do pagamento do mês atual
+                        </span>
+                      </div>
+                    </div>
+
+                    {userProperty.contract_start_date && userProperty.contract_end_date && (
+                      <div className="mt-4 p-3 bg-muted rounded-lg">
+                        <h4 className="font-medium">Informações do Contrato</h4>
+                        <p className="text-sm">Início: {new Date(userProperty.contract_start_date).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-sm">Fim: {new Date(userProperty.contract_end_date).toLocaleDateString('pt-BR')}</p>
+                        {(() => {
+                          const daysUntilExpiry = Math.ceil((new Date(userProperty.contract_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                          if (daysUntilExpiry <= 0) {
+                            return <p className="text-sm text-red-600">⚠️ Contrato vencido há {Math.abs(daysUntilExpiry)} dias</p>;
+                          } else if (daysUntilExpiry <= 30) {
+                            return <p className="text-sm text-yellow-600">⚠️ Contrato vence em {daysUntilExpiry} dias</p>;
+                          }
+                          return <p className="text-sm text-green-600">✅ Contrato em dia</p>;
+                        })()}
+                      </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Você ainda não foi associado a nenhuma propriedade. 
+                    Entre em contato com o administrador.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-            <TabsContent value="assignments">
-              <TenantAssignment
-                properties={properties}
-                tenants={tenants.map(t => ({ ...t, status: t.status || 'active' }))}
-                onAssignTenant={handleAssignTenant}
-                onUnassignTenant={handleUnassignTenant}
-              />
-            </TabsContent>
+          <TabsContent value="repairs">
+            <RepairRequest
+              userType="tenant"
+              currentTenantId={user.id}
+              currentPropertyId={userProperty?.id}
+              requests={repairRequests.map(req => ({
+                id: req.id,
+                title: req.title,
+                description: req.description,
+                category: (req.category || 'other') as "other" | "electrical" | "plumbing" | "structural" | "appliance",
+                priority: req.priority as any,
+                status: req.status as any,
+                requestDate: new Date(req.created_at).toLocaleDateString(),
+                tenantId: req.tenant_id || '',
+                propertyId: req.property_id || ''
+              }))}
+              onCreateRequest={(request) => createRepairRequest({
+                title: request.title,
+                description: request.description,
+                priority: request.priority,
+                category: request.category,
+                tenantId: request.tenantId,
+                propertyId: request.propertyId
+              })}
+              onUpdateStatus={updateRepairRequestStatus}
+            />
+          </TabsContent>
 
-            <TabsContent value="repairs">
-              <RepairRequest
-                userType="admin"
-                requests={repairRequests.map(req => ({
-                  id: req.id,
-                  title: req.title,
-                  description: req.description,
-                  category: 'other' as const,
-                  priority: req.priority as any,
-                  status: req.status as any,
-                  requestDate: new Date(req.created_at).toLocaleDateString(),
-                  tenantId: req.tenant_id || '',
-                  propertyId: req.property_id || ''
-                }))}
-                onCreateRequest={(request) => createRepairRequest({
-                  title: request.title,
-                  description: request.description,
-                  priority: request.priority,
-                  category: request.category,
-                  tenantId: request.tenantId,
-                  propertyId: request.propertyId
-                })}
-                onUpdateStatus={updateRepairRequestStatus}
-              />
-            </TabsContent>
-
-            <TabsContent value="payments">
-              <div className="space-y-6">
-                <PaymentProof
-                  userType="admin"
-                  proofs={paymentProofs.map(proof => ({
-                    id: proof.id,
-                    fileName: proof.file_name,
-                    fileUrl: proof.file_url,
-                    uploadDate: proof.created_at,
-                    status: proof.status,
-                    monthReference: proof.reference_month,
-                    amount: proof.amount.toString(),
-                    rejectionReason: proof.rejection_reason,
-                    observation: proof.observation
-                  }))}
-                  onUploadProof={handleUploadPaymentProof}
-                  onUpdateProofStatus={updatePaymentProofStatus}
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="billing">
-              <AdminBilling />
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <div className="space-y-6">
-                <MercadoPagoSettings adminId={user.id} />
-                <LateFeeSettings adminId={user.id} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="reports">
-              <ReportsSystem 
-                properties={properties.map(p => ({
-                  id: p.id,
-                  name: p.name,
-                  address: p.address,
-                  rent_amount: p.rent_amount,
-                  is_occupied: p.is_occupied,
-                  tenant_id: p.tenant_id || undefined
-                }))}
-                tenants={tenants.map(t => ({
-                  id: t.id,
-                  name: t.name,
-                  email: t.email,
-                  property_id: properties.find(p => p.tenant_id === t.id)?.id
-                }))}
-                payments={paymentProofs.map(proof => ({
-                  id: proof.id,
-                  amount: proof.amount,
-                  status: proof.status,
-                  reference_month: proof.reference_month,
-                  tenant_id: proof.tenant_id,
-                  property_id: proof.property_id
-                }))}
-                repairRequests={repairRequests.map(req => ({
-                  id: req.id,
-                  title: req.title,
-                  description: req.description,
-                  category: 'other' as const,
-                  priority: req.priority,
-                  status: req.status,
-                  requestDate: new Date(req.created_at).toLocaleDateString(),
-                  tenantId: req.tenant_id || '',
-                  propertyId: req.property_id || ''
-                }))}
-              />
-            </TabsContent>
-
-            <TabsContent value="chat">
-              <RealTimeChat currentUser={user} />
-            </TabsContent>
-          </Tabs>
-        )}
-
-        {user?.role === "tenant" && (
-          <Tabs defaultValue="property" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="property">Meu Imóvel</TabsTrigger>
-              <TabsTrigger value="repairs">Reparos</TabsTrigger>
-              <TabsTrigger value="payments">Pagamentos</TabsTrigger>
-              <TabsTrigger value="fees">Taxas</TabsTrigger>
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="property">
-              {userProperty ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Minha Propriedade</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-medium">{userProperty.name}</h3>
-                      <p className="text-muted-foreground">{userProperty.address}</p>
-                      <p className="text-lg font-semibold text-primary">
-                        Aluguel: R$ {userProperty.rent_amount.toFixed(2)}
-                      </p>
-                      {userProperty.description && (
-                        <p className="text-sm">{userProperty.description}</p>
-                      )}
-                      <div className="flex gap-4 text-sm text-muted-foreground">
-                        {userProperty.bedrooms && <span>{userProperty.bedrooms} quartos</span>}
-                        {userProperty.bathrooms && <span>{userProperty.bathrooms} banheiros</span>}
-                        {userProperty.area && <span>{userProperty.area}m²</span>}
-                      </div>
-                      
-                      {/* Status de Pagamento */}
-                      <div className="mt-4 p-3 bg-muted rounded-lg">
-                        <h4 className="font-medium">Status de Pagamento</h4>
-                        <div className="flex items-center gap-2 mt-2">
-                          {(userProperty as any).payment_status === 'paid' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                              ✅ Pago
-                            </span>
-                          )}
-                          {(userProperty as any).payment_status === 'pending' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              ⏳ Pendente
-                            </span>
-                          )}
-                          {(userProperty as any).payment_status === 'overdue' && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              ⚠️ Atrasado
-                            </span>
-                          )}
-                          <span className="text-sm text-muted-foreground ml-2">
-                            Status do pagamento do mês atual
-                          </span>
-                        </div>
-                      </div>
-
-                      {userProperty.contract_start_date && userProperty.contract_end_date && (
-                        <div className="mt-4 p-3 bg-muted rounded-lg">
-                          <h4 className="font-medium">Informações do Contrato</h4>
-                          <p className="text-sm">Início: {new Date(userProperty.contract_start_date).toLocaleDateString('pt-BR')}</p>
-                          <p className="text-sm">Fim: {new Date(userProperty.contract_end_date).toLocaleDateString('pt-BR')}</p>
-                          {(() => {
-                            const daysUntilExpiry = Math.ceil((new Date(userProperty.contract_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                            if (daysUntilExpiry <= 0) {
-                              return <p className="text-sm text-red-600">⚠️ Contrato vencido há {Math.abs(daysUntilExpiry)} dias</p>;
-                            } else if (daysUntilExpiry <= 30) {
-                              return <p className="text-sm text-yellow-600">⚠️ Contrato vence em {daysUntilExpiry} dias</p>;
-                            }
-                            return <p className="text-sm text-green-600">✅ Contrato em dia</p>;
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <p className="text-muted-foreground">
-                      Você ainda não foi associado a nenhuma propriedade. 
-                      Entre em contato com o administrador.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="repairs">
-              <RepairRequest
+          <TabsContent value="payments">
+            <div className="space-y-6">
+              <PaymentProof
                 userType="tenant"
-                currentTenantId={user.id}
-                currentPropertyId={userProperty?.id}
-                requests={repairRequests.map(req => ({
-                  id: req.id,
-                  title: req.title,
-                  description: req.description,
-                  category: (req.category || 'other') as "other" | "electrical" | "plumbing" | "structural" | "appliance",
-                  priority: req.priority as any,
-                  status: req.status as any,
-                  requestDate: new Date(req.created_at).toLocaleDateString(),
-                  tenantId: req.tenant_id || '',
-                  propertyId: req.property_id || ''
+                proofs={paymentProofs.map(proof => ({
+                  id: proof.id,
+                  fileName: proof.file_name,
+                  fileUrl: proof.file_url,
+                  uploadDate: proof.created_at,
+                  status: proof.status,
+                  monthReference: proof.reference_month,
+                  amount: proof.amount.toString(),
+                  rejectionReason: proof.rejection_reason,
+                  observation: proof.observation
                 }))}
-                onCreateRequest={(request) => createRepairRequest({
-                  title: request.title,
-                  description: request.description,
-                  priority: request.priority,
-                  category: request.category,
-                  tenantId: request.tenantId,
-                  propertyId: request.propertyId
-                })}
-                onUpdateStatus={updateRepairRequestStatus}
+                onUploadProof={handleUploadPaymentProof}
+                onUpdateProofStatus={updatePaymentProofStatus}
               />
-            </TabsContent>
+            </div>
+          </TabsContent>
 
-            <TabsContent value="payments">
-              <div className="space-y-6">
-                <PaymentProof
-                  userType="tenant"
-                  proofs={paymentProofs.map(proof => ({
-                    id: proof.id,
-                    fileName: proof.file_name,
-                    fileUrl: proof.file_url,
-                    uploadDate: proof.created_at,
-                    status: proof.status,
-                    monthReference: proof.reference_month,
-                    amount: proof.amount.toString(),
-                    rejectionReason: proof.rejection_reason,
-                    observation: proof.observation
-                  }))}
-                  onUploadProof={handleUploadPaymentProof}
-                  onUpdateProofStatus={updatePaymentProofStatus}
-                />
-              </div>
-            </TabsContent>
+          <TabsContent value="fees">
+            {userProperty ? (
+              <LateFeeView 
+                tenantId={user.id} 
+                propertyId={userProperty.id} 
+              />
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Você precisa estar associado a uma propriedade para visualizar as taxas.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-            <TabsContent value="fees">
-              {userProperty ? (
-                <LateFeeView 
-                  tenantId={user.id} 
-                  propertyId={userProperty.id} 
-                />
-              ) : (
-                <Card>
-                  <CardContent className="text-center py-12">
-                    <p className="text-muted-foreground">
-                      Você precisa estar associado a uma propriedade para visualizar as taxas.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="chat">
-              <RealTimeChat currentUser={user} />
-            </TabsContent>
-          </Tabs>
-        )}
-
-        {/* Modal do formulário de propriedade */}
-        {showPropertyForm && (
-          <PropertyForm
-            onClose={() => setShowPropertyForm(false)}
-            onSubmit={handleCreateProperty}
-          />
-        )}
-
-        {/* Modal do formulário de inquilino */}
-        {showTenantForm && (
-          <TenantForm
-            onClose={() => setShowTenantForm(false)}
-            onSubmit={handleCreateTenant}
-            properties={properties.filter(p => !p.is_occupied).map(p => ({ 
-              id: p.id, 
-              name: p.name, 
-              rent: p.rent_amount.toString() 
-            }))}
-          />
-        )}
+          <TabsContent value="chat">
+            <RealTimeChat currentUser={user} />
+          </TabsContent>
+        </Tabs>
       </div>
-      </div>
-    </AdminAccessBlock>
+    </div>
   );
 };
 
