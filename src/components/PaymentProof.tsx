@@ -36,6 +36,9 @@ export const PaymentProof = ({ userType, proofs, onUploadProof, onUpdateProofSta
   const [editObservation, setEditObservation] = useState("");
   const { toast } = useToast();
 
+  console.log("PaymentProof - userType:", userType);
+  console.log("PaymentProof - proofs received:", proofs);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {

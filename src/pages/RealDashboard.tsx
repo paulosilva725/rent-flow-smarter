@@ -51,6 +51,7 @@ interface RepairRequestData {
   id: string;
   title: string;
   description: string;
+  category?: string;
   priority: string;
   status: string;
   created_at: string;
@@ -160,6 +161,8 @@ const Dashboard = () => {
   };
 
   const fetchTenantData = async (tenantId: string) => {
+    console.log("Buscando dados para inquilino ID:", tenantId);
+
     // Buscar propriedade do inquilino
     const { data: propertyData } = await supabase
       .from("properties")
@@ -180,6 +183,7 @@ const Dashboard = () => {
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
+    console.log("Dados de reparo encontrados:", repairsData);
     if (repairsData) setRepairRequests(repairsData as any);
 
     // Buscar comprovantes de pagamento do inquilino
@@ -189,6 +193,7 @@ const Dashboard = () => {
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false });
 
+    console.log("Comprovantes de pagamento encontrados:", paymentProofsData);
     if (paymentProofsData) setPaymentProofs(paymentProofsData);
   };
 
@@ -1027,7 +1032,7 @@ const Dashboard = () => {
                   id: req.id,
                   title: req.title,
                   description: req.description,
-                  category: 'other' as const,
+                  category: (req.category || 'other') as "other" | "electrical" | "plumbing" | "structural" | "appliance",
                   priority: req.priority as any,
                   status: req.status as any,
                   requestDate: new Date(req.created_at).toLocaleDateString(),

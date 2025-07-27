@@ -155,6 +155,11 @@ export const RepairRequest = ({
     ? requests.filter(req => req.tenantId === currentTenantId)
     : requests;
 
+  console.log("RepairRequest - userType:", userType);
+  console.log("RepairRequest - currentTenantId:", currentTenantId);
+  console.log("RepairRequest - all requests:", requests);
+  console.log("RepairRequest - filtered requests:", filteredRequests);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-card">
