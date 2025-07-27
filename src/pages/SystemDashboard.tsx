@@ -193,6 +193,28 @@ export default function SystemDashboard() {
     return daysLeft > 0 ? daysLeft : 0;
   };
 
+  const processCredits = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('consume-credits');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: `Processados: ${data.processedCount} assinaturas, ${data.blockedCount} bloqueadas`
+      });
+
+      fetchPropertyOwners();
+    } catch (error) {
+      console.error("Error processing credits:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao processar créditos",
+        variant: "destructive"
+      });
+    }
+  };
+
   const stats = {
     totalOwners: propertyOwners.length,
     activeSubscriptions: propertyOwners.filter(o => o.subscription?.status === 'active').length,
@@ -213,6 +235,9 @@ export default function SystemDashboard() {
         <div className="flex gap-2">
           <UserSwitcher />
           <Button onClick={fetchPropertyOwners}>Atualizar</Button>
+          <Button onClick={processCredits} variant="secondary">
+            Processar Créditos
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => {

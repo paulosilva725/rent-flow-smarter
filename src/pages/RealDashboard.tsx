@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { LogOut, Settings, Home, Users, MessageSquare, CreditCard, FileText, Wrench, Edit3, Trash2 } from "lucide-react";
+import AdminAccessBlock from "@/components/AdminAccessBlock";
 import RealTimeChat from "@/components/RealTimeChat";
 import PaymentArea from "@/components/PaymentArea";
 import MercadoPagoSettings from "@/components/MercadoPagoSettings";
@@ -843,7 +844,8 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <AdminAccessBlock>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -1263,7 +1265,8 @@ const Dashboard = () => {
           />
         )}
       </div>
-    </div>
+      </div>
+    </AdminAccessBlock>
   );
 };
 
