@@ -19,33 +19,25 @@ export default function SystemLogin() {
     setLoading(true);
 
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Simple hardcoded verification for system owner
+      if (email === "admin@sistema.com" && password === "admin123") {
+        // Create a local session for system owner
+        localStorage.setItem('system_owner_session', JSON.stringify({
+          email: "admin@sistema.com",
+          name: "System Owner",
+          role: "system_owner",
+          login_time: new Date().toISOString()
+        }));
 
-      if (authError) throw authError;
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Bem-vindo ao painel do sistema!"
+        });
 
-      // Check if user is system owner
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("user_id", authData.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile.role !== "system_owner") {
-        await supabase.auth.signOut();
-        throw new Error("Acesso negado. Apenas o proprietário do sistema pode acessar.");
+        navigate("/system-dashboard");
+      } else {
+        throw new Error("Credenciais inválidas. Use admin@sistema.com / admin123");
       }
-
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Bem-vindo ao painel do sistema!"
-      });
-
-      navigate("/system-dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
@@ -58,54 +50,6 @@ export default function SystemLogin() {
     }
   };
 
-  const createSystemOwner = async () => {
-    setLoading(true);
-    
-    try {
-      // Create the system owner account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: "admin@sistema.com",
-        password: "admin123",
-        options: {
-          data: {
-            name: "System Owner",
-            role: "system_owner"
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Update the profile role to system_owner
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ role: "system_owner" })
-          .eq("user_id", authData.user.id);
-
-        if (profileError) throw profileError;
-      }
-
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Agora você pode fazer login com admin@sistema.com / admin123"
-      });
-
-      // Pre-fill the form
-      setEmail("admin@sistema.com");
-      setPassword("admin123");
-
-    } catch (error: any) {
-      console.error("Create system owner error:", error);
-      toast({
-        title: "Erro ao criar conta",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
@@ -165,17 +109,9 @@ export default function SystemLogin() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              Credenciais padrão: admin@sistema.com / admin123
+            <p className="text-sm text-muted-foreground">
+              Use as credenciais: admin@sistema.com / admin123
             </p>
-            <Button 
-              variant="outline" 
-              onClick={createSystemOwner}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? "Criando..." : "Criar Conta System Owner"}
-            </Button>
           </div>
         </CardContent>
       </Card>

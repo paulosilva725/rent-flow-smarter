@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,14 +29,22 @@ interface PropertyOwner {
 }
 
 export default function SystemDashboard() {
+  const navigate = useNavigate();
   const [propertyOwners, setPropertyOwners] = useState<PropertyOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
 
   useEffect(() => {
+    // Check if user is authenticated as system owner
+    const systemSession = localStorage.getItem('system_owner_session');
+    if (!systemSession) {
+      navigate('/system-login');
+      return;
+    }
+    
     fetchPropertyOwners();
-  }, []);
+  }, [navigate]);
 
   const fetchPropertyOwners = async () => {
     try {
@@ -146,7 +155,18 @@ export default function SystemDashboard() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard do Sistema</h1>
-        <Button onClick={fetchPropertyOwners}>Atualizar</Button>
+        <div className="flex gap-2">
+          <Button onClick={fetchPropertyOwners}>Atualizar</Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              localStorage.removeItem('system_owner_session');
+              navigate('/system-login');
+            }}
+          >
+            Sair
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
