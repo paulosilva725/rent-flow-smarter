@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useToast } from "@/components/ui/use-toast";
 
 const Auth = () => {
@@ -23,14 +23,6 @@ const Auth = () => {
     cpf: ""
   });
 
-  const [signupData, setSignupData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    cpf: "",
-    phone: "",
-    role: "tenant"
-  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,41 +92,6 @@ const Auth = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: signupData.email,
-        password: signupData.password,
-        options: {
-          data: {
-            name: signupData.name,
-            role: signupData.role,
-            cpf: signupData.cpf,
-            phone: signupData.phone,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro no cadastro",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -144,15 +101,14 @@ const Auth = () => {
             Sistema de Gerenciamento
           </CardTitle>
           <CardDescription className="text-center">
-            Faça login ou crie sua conta
+            Faça login para acessar o sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="admin" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="admin">Admin</TabsTrigger>
               <TabsTrigger value="tenant">Inquilino</TabsTrigger>
-              <TabsTrigger value="signup">Cadastro</TabsTrigger>
             </TabsList>
 
             <TabsContent value="admin">
@@ -207,70 +163,6 @@ const Auth = () => {
               </form>
             </TabsContent>
 
-            <TabsContent value="signup">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input
-                    id="name"
-                    value={signupData.name}
-                    onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={signupData.email}
-                    onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Senha</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    value={signupData.password}
-                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    value={signupData.cpf}
-                    onChange={(e) => setSignupData({ ...signupData, cpf: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={signupData.phone}
-                    onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Tipo de Usuário</Label>
-                  <Select value={signupData.role} onValueChange={(value) => setSignupData({ ...signupData, role: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tenant">Inquilino</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Criando conta..." : "Criar Conta"}
-                </Button>
-              </form>
-            </TabsContent>
           </Tabs>
           
           {/* Link discreto para login do sistema */}

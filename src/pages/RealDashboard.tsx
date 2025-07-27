@@ -336,7 +336,7 @@ const Dashboard = () => {
 
       toast({
         title: "Inquilino cadastrado com sucesso!",
-        description: "O inquilino foi cadastrado, atribuído ao imóvel e pode fazer login com email e senha.",
+        description: "O inquilino foi cadastrado, atribuído ao imóvel e pode fazer login com email/senha ou CPF.",
       });
       
       fetchAdminData();
