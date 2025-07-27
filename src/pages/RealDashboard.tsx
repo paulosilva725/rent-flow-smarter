@@ -243,6 +243,8 @@ const Dashboard = () => {
   const handleCreateTenant = async (data: any) => {
     console.log("=== INÍCIO CRIAÇÃO INQUILINO ===");
     console.log("Dados recebidos para criar inquilino:", data);
+    console.log("Usuário atual:", user);
+    console.log("Função está sendo chamada corretamente");
     
     try {
       console.log("1. Verificando se email já existe...");
