@@ -702,7 +702,15 @@ export type Database = {
         Args: { p_tenant_id: string }
         Returns: boolean
       }
+      can_insert_repair_request: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
       can_view_payment_proof: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
+      can_view_repair_request: {
         Args: { p_tenant_id: string }
         Returns: boolean
       }
