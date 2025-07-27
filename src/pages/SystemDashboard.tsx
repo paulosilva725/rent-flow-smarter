@@ -165,6 +165,7 @@ export default function SystemDashboard() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Dashboard do Sistema</h1>
         <div className="flex gap-2">
+          <UserSwitcher />
           <Button onClick={fetchPropertyOwners}>Atualizar</Button>
           <Button 
             variant="outline" 
