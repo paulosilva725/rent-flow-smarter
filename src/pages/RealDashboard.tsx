@@ -18,6 +18,7 @@ import { RepairRequest } from "@/components/RepairRequest";
 import LateFeeSettings from "@/components/LateFeeSettings";
 import LateFeeView from "@/components/LateFeeView";
 import { ReportsSystem } from "@/components/ReportsSystem";
+import AdminBilling from "@/components/AdminBilling";
 
 interface User {
   id: string;
@@ -737,12 +738,13 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-6">
         {user?.role === "admin" && (
           <Tabs defaultValue="properties" className="w-full">
-            <TabsList className="grid w-full grid-cols-8">
+            <TabsList className="grid w-full grid-cols-9">
               <TabsTrigger value="properties">Propriedades</TabsTrigger>
               <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
               <TabsTrigger value="assignments">Designações</TabsTrigger>
               <TabsTrigger value="repairs">Reparos</TabsTrigger>
               <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+              <TabsTrigger value="billing">Meu Plano</TabsTrigger>
               <TabsTrigger value="settings">Configurações</TabsTrigger>
               <TabsTrigger value="reports">Relatórios</TabsTrigger>
               <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -892,6 +894,10 @@ const Dashboard = () => {
                   onUpdateProofStatus={updatePaymentProofStatus}
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent value="billing">
+              <AdminBilling />
             </TabsContent>
 
             <TabsContent value="settings">
