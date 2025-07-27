@@ -15,11 +15,14 @@ import { ptBR } from "date-fns/locale";
 import { Users, DollarSign, Calendar, AlertTriangle } from "lucide-react";
 import PlanManagement from "@/components/PlanManagement";
 import UserBlockManagement from "@/components/UserBlockManagement";
+import EditAdminProfile from "@/components/EditAdminProfile";
 
 interface PropertyOwner {
   id: string;
   name: string;
   email: string;
+  cpf?: string;
+  phone?: string;
   created_at: string;
   subscription?: {
     id: string;
@@ -60,6 +63,8 @@ export default function SystemDashboard() {
           id,
           name,
           email,
+          cpf,
+          phone,
           created_at,
           system_subscriptions (
             id,
@@ -239,6 +244,7 @@ export default function SystemDashboard() {
                 <TableHead>Trial/Próximo Pagamento</TableHead>
                 <TableHead>Ações</TableHead>
                 <TableHead>Controle</TableHead>
+                <TableHead>Editar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -314,6 +320,9 @@ export default function SystemDashboard() {
                   </TableCell>
                   <TableCell>
                     <UserBlockManagement owner={owner} onUpdate={fetchPropertyOwners} />
+                  </TableCell>
+                  <TableCell>
+                    <EditAdminProfile owner={owner} onUpdate={fetchPropertyOwners} />
                   </TableCell>
                 </TableRow>
               ))}
