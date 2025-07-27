@@ -706,6 +706,9 @@ const Dashboard = () => {
     }
   };
 
+  console.log("RealDashboard - user:", user);
+  console.log("RealDashboard - user.role:", user?.role);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
