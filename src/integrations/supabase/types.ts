@@ -698,6 +698,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_insert_payment_proof: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
+      can_view_payment_proof: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
       is_system_owner: {
         Args: Record<PropertyKey, never>
         Returns: boolean
