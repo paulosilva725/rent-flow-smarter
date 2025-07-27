@@ -708,6 +708,8 @@ const Dashboard = () => {
 
   console.log("RealDashboard - user:", user);
   console.log("RealDashboard - user.role:", user?.role);
+  console.log("RealDashboard - rendering tenant section:", user?.role === "tenant");
+  console.log("RealDashboard - paymentProofs for tenant:", paymentProofs);
 
   if (loading) {
     return (
