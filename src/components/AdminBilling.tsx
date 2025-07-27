@@ -42,33 +42,37 @@ export default function AdminBilling() {
   const fetchBillingData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("AdminBilling - Auth user:", user);
       if (!user) return;
 
       // Buscar perfil do usuário
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("id")
         .eq("user_id", user.id)
         .single();
 
+      console.log("AdminBilling - Profile:", profile, "Error:", profileError);
       if (!profile) return;
 
       // Buscar assinatura
-      const { data: subscriptionData } = await supabase
+      const { data: subscriptionData, error: subscriptionError } = await supabase
         .from("system_subscriptions")
         .select("*")
         .eq("owner_id", profile.id)
         .single();
 
+      console.log("AdminBilling - Subscription:", subscriptionData, "Error:", subscriptionError);
       setSubscription(subscriptionData);
 
       // Buscar faturas
-      const { data: invoicesData } = await supabase
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from("system_invoices")
         .select("*")
         .eq("owner_id", profile.id)
         .order("created_at", { ascending: false });
 
+      console.log("AdminBilling - Invoices:", invoicesData, "Error:", invoicesError);
       setInvoices(invoicesData || []);
     } catch (error) {
       console.error("Error fetching billing data:", error);
