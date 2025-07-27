@@ -399,6 +399,7 @@ export type Database = {
           id: string
           is_occupied: boolean | null
           name: string
+          payment_status: string | null
           rent_amount: number
           security_deposit: number | null
           tenant_id: string | null
@@ -417,6 +418,7 @@ export type Database = {
           id?: string
           is_occupied?: boolean | null
           name: string
+          payment_status?: string | null
           rent_amount: number
           security_deposit?: number | null
           tenant_id?: string | null
@@ -435,6 +437,7 @@ export type Database = {
           id?: string
           is_occupied?: boolean | null
           name?: string
+          payment_status?: string | null
           rent_amount?: number
           security_deposit?: number | null
           tenant_id?: string | null

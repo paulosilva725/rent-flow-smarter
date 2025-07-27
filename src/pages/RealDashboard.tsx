@@ -684,29 +684,71 @@ const Dashboard = () => {
   };
 
   const handleUpdateTenant = async (tenant: any) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        name: tenant.name,
-        email: tenant.email,
-        phone: tenant.phone,
-        cpf: tenant.document,
-        status: tenant.paymentStatus,
-      })
-      .eq("id", tenant.id);
+    console.log("=== ATUALIZANDO INQUILINO ===");
+    console.log("Dados do inquilino:", tenant);
+    
+    // Se está atualizando apenas o status de pagamento
+    if (tenant.paymentStatus) {
+      console.log("Atualizando status de pagamento para:", tenant.paymentStatus);
+      
+      // Encontrar a propriedade do inquilino
+      const property = properties.find(p => p.tenant_id === tenant.id);
+      if (!property) {
+        toast({
+          title: "Erro",
+          description: "Propriedade do inquilino não encontrada.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (error) {
-      toast({
-        title: "Erro ao atualizar inquilino",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Atualizar o status de pagamento na propriedade
+      const { error } = await supabase
+        .from("properties")
+        .update({
+          payment_status: tenant.paymentStatus
+        })
+        .eq("id", property.id);
+
+      if (error) {
+        console.error("Erro ao atualizar status de pagamento:", error);
+        toast({
+          title: "Erro ao atualizar status de pagamento",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Status atualizado",
+          description: `Status de pagamento alterado para ${tenant.paymentStatus === 'paid' ? 'Pago' : tenant.paymentStatus === 'pending' ? 'Pendente' : 'Atrasado'}.`,
+        });
+        fetchAdminData();
+      }
     } else {
-      toast({
-        title: "Inquilino atualizado",
-        description: "Os dados do inquilino foram atualizados.",
-      });
-      fetchAdminData();
+      // Atualização completa do perfil do inquilino
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          name: tenant.name,
+          email: tenant.email,
+          phone: tenant.phone,
+          cpf: tenant.document,
+        })
+        .eq("id", tenant.id);
+
+      if (error) {
+        toast({
+          title: "Erro ao atualizar inquilino",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Inquilino atualizado",
+          description: "Os dados do inquilino foram atualizados.",
+        });
+        fetchAdminData();
+      }
     }
   };
 
@@ -866,7 +908,7 @@ const Dashboard = () => {
                   rentAmount: properties.find(p => p.tenant_id === t.id)?.rent_amount.toString(),
                   startDate: properties.find(p => p.tenant_id === t.id)?.contract_start_date,
                   endDate: properties.find(p => p.tenant_id === t.id)?.contract_end_date,
-                  paymentStatus: 'pending' as const
+                  paymentStatus: (properties.find(p => p.tenant_id === t.id) as any)?.payment_status || 'pending' as const
                 }))}
                 onUpdateProperty={handleUpdateProperty}
                 onDeleteProperty={handleDeleteProperty}
