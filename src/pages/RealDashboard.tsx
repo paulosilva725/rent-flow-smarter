@@ -166,7 +166,7 @@ const Dashboard = () => {
     // Buscar propriedade do inquilino
     const { data: propertyData } = await supabase
       .from("properties")
-      .select("*")
+      .select("*, payment_status")
       .eq("tenant_id", tenantId)
       .single();
 
