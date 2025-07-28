@@ -151,7 +151,16 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
   };
 
   const uploadPaymentProof = async () => {
+    console.log("PaymentArea - uploadPaymentProof iniciado", { 
+      tenantId, 
+      propertyId, 
+      selectedFile: selectedFile?.name, 
+      selectedMonth,
+      rentAmount 
+    });
+
     if (!selectedFile || !selectedMonth) {
+      console.log("PaymentArea - Dados incompletos", { selectedFile: !!selectedFile, selectedMonth });
       toast({
         title: "Dados incompletos",
         description: "Selecione um arquivo e o mês de referência.",
@@ -167,11 +176,18 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${tenantId}/${Date.now()}_${selectedFile.name}`;
       
+      console.log("PaymentArea - Iniciando upload do arquivo", { fileName, fileSize: selectedFile.size });
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("payment_proofs")
         .upload(fileName, selectedFile);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("PaymentArea - Erro no upload do arquivo:", uploadError);
+        throw uploadError;
+      }
+
+      console.log("PaymentArea - Upload bem sucedido, inserindo no banco", { uploadData });
 
       // Salvar registro no banco
       const { error: insertError } = await supabase
@@ -185,7 +201,12 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
           reference_month: selectedMonth,
         });
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("PaymentArea - Erro ao inserir no banco:", insertError);
+        throw insertError;
+      }
+
+      console.log("PaymentArea - Comprovante salvo com sucesso");
 
       toast({
         title: "Comprovante enviado",
