@@ -477,15 +477,31 @@ const Dashboard = () => {
   };
 
   const handleUploadPaymentProof = async (file: File, monthReference: string, amount: string) => {
-    if (!user?.id) return;
+    console.log("=== UPLOAD PAYMENT PROOF ===");
+    console.log("User:", user);
+    console.log("User ID:", user?.id);
+    console.log("User Property:", userProperty);
+    
+    if (!user?.id) {
+      console.error("User ID não encontrado");
+      toast({
+        title: "Erro",
+        description: "Usuário não identificado",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Upload do arquivo para o storage
     const fileName = `${user.id}/${Date.now()}_${file.name}`;
+    console.log("Fazendo upload do arquivo:", fileName);
+    
     const { error: uploadError } = await supabase.storage
       .from('payment_proofs')
       .upload(fileName, file);
 
     if (uploadError) {
+      console.error("Erro no upload:", uploadError);
       toast({
         title: "Erro no upload",
         description: uploadError.message,
@@ -494,26 +510,38 @@ const Dashboard = () => {
       return;
     }
 
+    console.log("Upload realizado com sucesso");
+
     // Criar registro no banco - usar o ID do perfil do inquilino, não o user_id do auth
+    const insertData = {
+      tenant_id: user.id, // Este já é o profile.id correto do inquilino
+      property_id: userProperty?.id,
+      file_name: file.name,
+      file_url: fileName,
+      reference_month: monthReference,
+      amount: parseFloat(amount),
+      status: 'pending',
+    };
+
+    console.log("Dados para inserir no banco:", insertData);
+
     const { error: insertError } = await supabase
       .from("payment_proofs")
-      .insert({
-        tenant_id: user.id, // Este já é o profile.id correto do inquilino
-        property_id: userProperty?.id,
-        file_name: file.name,
-        file_url: fileName,
-        reference_month: monthReference,
-        amount: parseFloat(amount),
-        status: 'pending',
-      });
+      .insert(insertData);
 
     if (insertError) {
+      console.error("Erro ao salvar comprovante:", insertError);
       toast({
         title: "Erro ao salvar comprovante",
         description: insertError.message,
         variant: "destructive",
       });
     } else {
+      console.log("Comprovante salvo com sucesso");
+      toast({
+        title: "Comprovante enviado!",
+        description: "Seu comprovante foi enviado para análise."
+      });
       fetchTenantData(user.id);
     }
   };
@@ -539,21 +567,32 @@ const Dashboard = () => {
   };
 
   const createRepairRequest = async (request: { title: string, description: string, priority: string, category: string, tenantId: string, propertyId: string }) => {
+    console.log("=== CREATE REPAIR REQUEST ===");
+    console.log("Request data:", request);
+    console.log("User:", user);
+
     try {
+      const insertData = {
+        title: request.title,
+        description: request.description,
+        priority: request.priority,
+        category: request.category,
+        tenant_id: request.tenantId,
+        property_id: request.propertyId
+      };
+
+      console.log("Data to insert:", insertData);
+
       const { error } = await supabase
         .from('repair_requests')
-        .insert([
-          {
-            title: request.title,
-            description: request.description,
-            priority: request.priority,
-            category: request.category,
-            tenant_id: request.tenantId,
-            property_id: request.propertyId
-          }
-        ]);
+        .insert([insertData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
+      
+      console.log("Repair request created successfully");
       
       toast({
         title: "Solicitação criada!",
@@ -1275,14 +1314,14 @@ const Dashboard = () => {
                 tenantId: req.tenant_id || '',
                 propertyId: req.property_id || ''
               }))}
-              onCreateRequest={(request) => createRepairRequest({
-                title: request.title,
-                description: request.description,
-                priority: request.priority,
-                category: request.category,
-                tenantId: request.tenantId,
-                propertyId: request.propertyId
-              })}
+               onCreateRequest={(request) => createRepairRequest({
+                 title: request.title,
+                 description: request.description,
+                 priority: request.priority,
+                 category: request.category,
+                 tenantId: user.id, // Usar o ID do usuário logado
+                 propertyId: userProperty?.id || '' // Usar a propriedade do inquilino
+               })}
               onUpdateStatus={updateRepairRequestStatus}
             />
           </TabsContent>
