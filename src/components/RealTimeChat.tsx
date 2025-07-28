@@ -64,10 +64,27 @@ const RealTimeChat = ({ currentUser, otherUser }: RealTimeChatProps) => {
   }, [messages]);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase
+    // Chat exclusivo entre admin e inquilino
+    let query = supabase
       .from("profiles")
       .select("*")
       .neq("id", currentUser.id);
+
+    // Se usuário é admin, mostrar apenas inquilinos
+    if (currentUser.role === "admin") {
+      query = query.eq("role", "tenant");
+    }
+    // Se usuário é inquilino, mostrar apenas admins
+    else if (currentUser.role === "tenant") {
+      query = query.eq("role", "admin");
+    }
+    // System owners não participam do chat
+    else {
+      setUsers([]);
+      return;
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching users:", error);
