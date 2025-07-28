@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { CreditCard, Upload, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { CreditCard, Upload, FileText, CheckCircle, XCircle, Clock, Trash2 } from "lucide-react";
 
 interface Payment {
   id: string;
@@ -206,6 +206,34 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
     }
   };
 
+  const deletePaymentProof = async (proofId: string) => {
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from("payment_proofs")
+        .delete()
+        .eq("id", proofId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Comprovante excluído",
+        description: "Comprovante foi excluído com sucesso.",
+      });
+
+      fetchPaymentProofs();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir comprovante",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -344,7 +372,7 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
                 
                 {paymentProofs.map((proof) => (
                   <div key={proof.id} className="flex justify-between items-center p-3 border rounded-lg">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">Comprovante - {proof.reference_month}</p>
                       <p className="text-sm text-muted-foreground">
                         R$ {proof.amount.toFixed(2)} • {proof.file_name}
@@ -355,7 +383,20 @@ const PaymentArea = ({ tenantId, propertyId, rentAmount }: PaymentAreaProps) => 
                         </p>
                       )}
                     </div>
-                    {getStatusBadge(proof.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(proof.status)}
+                      {proof.status === "approved" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deletePaymentProof(proof.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={isLoading}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </>
