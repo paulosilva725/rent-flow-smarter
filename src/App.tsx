@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/RealDashboard";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import SystemDashboard from "./pages/SystemDashboard";
 import NotFound from "./pages/NotFound";
