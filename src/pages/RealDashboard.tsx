@@ -8,14 +8,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { LogOut, Settings, Home, Users, MessageSquare, CreditCard, FileText, Wrench, Edit3, Trash2 } from "lucide-react";
 import AdminAccessBlock from "@/components/AdminAccessBlock";
 import RealTimeChat from "@/components/RealTimeChat";
-import PaymentArea from "@/components/PaymentArea";
 import MercadoPagoSettings from "@/components/MercadoPagoSettings";
 import { PropertyForm } from "@/components/PropertyForm";
 import { PropertyManagement } from "@/components/PropertyManagement";
 import { TenantForm } from "@/components/TenantForm";
 import { TenantAssignment } from "@/components/TenantAssignment";
-import { PaymentProof } from "@/components/PaymentProof";
-import { RepairRequest } from "@/components/RepairRequest";
+import UnifiedRequestSystem from "@/components/UnifiedRequestSystem";
 import LateFeeSettings from "@/components/LateFeeSettings";
 import LateFeeView from "@/components/LateFeeView";
 import { ReportsSystem } from "@/components/ReportsSystem";
@@ -949,12 +947,11 @@ const Dashboard = () => {
 
           <div className="container mx-auto px-4 py-6">
             <Tabs defaultValue="properties" className="w-full">
-              <TabsList className="grid w-full grid-cols-9">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="properties">Propriedades</TabsTrigger>
                 <TabsTrigger value="tenants">Inquilinos</TabsTrigger>
                 <TabsTrigger value="assignments">Designações</TabsTrigger>
-                <TabsTrigger value="repairs">Reparos</TabsTrigger>
-                <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+                <TabsTrigger value="requests">Solicitações</TabsTrigger>
                 <TabsTrigger value="billing">Meu Plano</TabsTrigger>
                 <TabsTrigger value="settings">Configurações</TabsTrigger>
                 <TabsTrigger value="reports">Relatórios</TabsTrigger>
@@ -1060,51 +1057,11 @@ const Dashboard = () => {
                 />
               </TabsContent>
 
-              <TabsContent value="repairs">
-                <RepairRequest
-                  userType="admin"
-                  requests={repairRequests.map(req => ({
-                    id: req.id,
-                    title: req.title,
-                    description: req.description,
-                    category: 'other' as const,
-                    priority: req.priority as any,
-                    status: req.status as any,
-                    requestDate: new Date(req.created_at).toLocaleDateString(),
-                    tenantId: req.tenant_id || '',
-                    propertyId: req.property_id || ''
-                  }))}
-                  onCreateRequest={(request) => createRepairRequest({
-                    title: request.title,
-                    description: request.description,
-                    priority: request.priority,
-                    category: request.category,
-                    tenantId: request.tenantId,
-                    propertyId: request.propertyId
-                  })}
-                  onUpdateStatus={updateRepairRequestStatus}
+              <TabsContent value="requests">
+                <UnifiedRequestSystem 
+                  user={user}
+                  isAdmin={true}
                 />
-              </TabsContent>
-
-              <TabsContent value="payments">
-                <div className="space-y-6">
-                  <PaymentProof
-                    userType="admin"
-                    proofs={paymentProofs.map(proof => ({
-                      id: proof.id,
-                      fileName: proof.file_name,
-                      fileUrl: proof.file_url,
-                      uploadDate: proof.created_at,
-                      status: proof.status,
-                      monthReference: proof.reference_month,
-                      amount: proof.amount.toString(),
-                      rejectionReason: proof.rejection_reason,
-                      observation: proof.observation
-                    }))}
-                    onUploadProof={handleUploadPaymentProof}
-                    onUpdateProofStatus={updatePaymentProofStatus}
-                  />
-                </div>
               </TabsContent>
 
               <TabsContent value="billing">
@@ -1212,10 +1169,9 @@ const Dashboard = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="property" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 max-w-lg">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="property">Meu Imóvel</TabsTrigger>
-            <TabsTrigger value="repairs">Reparos</TabsTrigger>
-            <TabsTrigger value="payments">Pagamentos</TabsTrigger>
+            <TabsTrigger value="requests">Solicitações</TabsTrigger>
             <TabsTrigger value="fees">Taxas</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
@@ -1298,53 +1254,12 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="repairs">
-            <RepairRequest
-              userType="tenant"
-              currentTenantId={user.id}
-              currentPropertyId={userProperty?.id}
-              requests={repairRequests.map(req => ({
-                id: req.id,
-                title: req.title,
-                description: req.description,
-                category: (req.category || 'other') as "other" | "electrical" | "plumbing" | "structural" | "appliance",
-                priority: req.priority as any,
-                status: req.status as any,
-                requestDate: new Date(req.created_at).toLocaleDateString(),
-                tenantId: req.tenant_id || '',
-                propertyId: req.property_id || ''
-              }))}
-               onCreateRequest={(request) => createRepairRequest({
-                 title: request.title,
-                 description: request.description,
-                 priority: request.priority,
-                 category: request.category,
-                 tenantId: user.id, // Usar o ID do usuário logado
-                 propertyId: userProperty?.id || '' // Usar a propriedade do inquilino
-               })}
-              onUpdateStatus={updateRepairRequestStatus}
+          <TabsContent value="requests">
+            <UnifiedRequestSystem 
+              user={user}
+              userProperty={userProperty || undefined}
+              isAdmin={false}
             />
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <div className="space-y-6">
-              <PaymentProof
-                userType="tenant"
-                proofs={paymentProofs.map(proof => ({
-                  id: proof.id,
-                  fileName: proof.file_name,
-                  fileUrl: proof.file_url,
-                  uploadDate: proof.created_at,
-                  status: proof.status,
-                  monthReference: proof.reference_month,
-                  amount: proof.amount.toString(),
-                  rejectionReason: proof.rejection_reason,
-                  observation: proof.observation
-                }))}
-                onUploadProof={handleUploadPaymentProof}
-                onUpdateProofStatus={updatePaymentProofStatus}
-              />
-            </div>
           </TabsContent>
 
           <TabsContent value="fees">
