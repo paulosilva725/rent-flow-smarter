@@ -33,5 +33,5 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
+<SpeedInsights />
 export default App;
