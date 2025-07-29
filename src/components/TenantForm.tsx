@@ -9,19 +9,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 
-const createTenantSchema = (isEditing = false) => z.object({
-  name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido"),
-  password: isEditing 
-    ? z.string().optional() 
-    : z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  phone: z.string().min(1, "Telefone é obrigatório"),
-  document: z.string().min(1, "CPF/CNPJ é obrigatório"),
-  propertyId: z.string().min(1, "Selecione um imóvel"),
-  rentAmount: z.string().min(1, "Valor do aluguel é obrigatório"),
-  startDate: z.string().min(1, "Data de início é obrigatória"),
-  endDate: z.string().min(1, "Data de fim é obrigatória"),
-});
+const createTenantSchema = (isEditing = false) =>
+  z.object({
+    name: z.string().min(1, "Nome é obrigatório"),
+    email: z.string().email("Email inválido"),
+    password: isEditing
+      ? z.string().optional()
+      : z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+    phone: z.string().min(1, "Telefone é obrigatório"),
+    document: z.string().min(1, "CPF/CNPJ é obrigatório"),
+    propertyId: z.string().min(1, "Selecione um imóvel"),
+    rentAmount: z.coerce.number().min(1, "Valor do aluguel é obrigatório"),
+    startDate: z.coerce.date({ invalid_type_error: "Data de início inválida" }),
+    endDate: z.coerce.date({ invalid_type_error: "Data de fim inválida" }),
+  });
 
 type TenantFormData = z.infer<ReturnType<typeof createTenantSchema>>;
 
